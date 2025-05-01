@@ -3,6 +3,7 @@
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,27 +15,33 @@
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
+
         .form-container {
             background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
         }
+
         .input-focus {
             transition: all 0.3s ease;
         }
+
         .input-focus:focus {
             transform: translateY(-2px);
             box-shadow: 0 4px 6px rgba(128, 0, 0, 0.1);
         }
+
         .btn-primary {
             background: linear-gradient(135deg, #800000 0%, #a52a2a 100%);
             transition: all 0.3s ease;
         }
+
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(128, 0, 0, 0.2);
         }
     </style>
 </head>
+
 <body class="min-h-screen flex items-center justify-center">
     <div class="container mx-auto px-4">
         <div class="max-w-6xl mx-auto">
@@ -77,7 +84,7 @@
 
                         <div class="text-center mt-4">
                             <p class="text-sm text-gray-600">
-                                Don't have an account? 
+                                Don't have an account?
                                 <a href="register.php" class="text-[#800000] hover:text-[#a52a2a] font-medium">Register here</a>
                             </p>
                         </div>
@@ -94,4 +101,5 @@
 
     <script src="../js/index.js"></script>
 </body>
+
 </html>
