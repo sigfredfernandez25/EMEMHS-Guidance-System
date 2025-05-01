@@ -2,35 +2,53 @@
 // Database table name constants
 define('TBL_STUDENTS', 'students');
 define('TBL_PARENTS', 'parents');
+define('TBL_COMPLAINTS_CONCERNS', 'complaints_concerns');
 define('TBL_USERS', 'tbl_users');
-
+define('TBL_LOST_ITEMS', 'lost_items');
 // SQL Query Constants for Students Registration
-define('SQL_CHECK_EMAIL_EXISTS', 
+define(
+    'SQL_CHECK_EMAIL_EXISTS',
     "SELECT email FROM " . TBL_STUDENTS . " WHERE email = ?"
 );
 
-define('SQL_CHECK_STUDENT_ID_EXISTS', 
+define(
+    'SQL_CHECK_STUDENT_ID_EXISTS',
     "SELECT student_id FROM " . TBL_STUDENTS . " WHERE student_id = ?"
 );
 
-define('SQL_INSERT_USER',
+define(
+    'SQL_INSERT_COMPLAINTS_CONCERNS',
+    "INSERT INTO " . TBL_COMPLAINTS_CONCERNS . " (student_id, type, description, preferred_counseling_date, evidence, mime_type, status, date_created, time_created)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+);
+
+define(
+    'SQL_UPDATE_COMPLAINTS_CONCERNS',
+    "UPDATE " . TBL_COMPLAINTS_CONCERNS . " SET student_id = ?, type = ?, description = ?, preferred_counseling_date = ?, evidence = ?, mime_type = ?, status = ?, date_created = ?, time_created = ? WHERE id = ?"
+);
+
+define(
+    'SQL_INSERT_USER',
     "INSERT INTO " . TBL_USERS . " (email, password, role) 
      VALUES (?, ?, 'student')"
 );
 
-define('SQL_INSERT_STUDENT',
-    "INSERT INTO " . TBL_STUDENTS . 
-    " (first_name, middle_name, last_name, grade_level, section, email, phone_number, password) 
+define(
+    'SQL_INSERT_STUDENT',
+    "INSERT INTO " . TBL_STUDENTS .
+        " (first_name, middle_name, last_name, grade_level, section, email, phone_number, password) 
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 );
 
-define('SQL_INSERT_PARENT',
-    "INSERT INTO " . TBL_PARENTS . 
-    " (parent_name, contact_number, student_id) 
+define(
+    'SQL_INSERT_PARENT',
+    "INSERT INTO " . TBL_PARENTS .
+        " (parent_name, contact_number, student_id) 
      VALUES (?, ?, ?)"
 );
 
-define('SQL_GET_STUDENT',
+define(
+    'SQL_GET_STUDENT',
     "SELECT s.*, p.parent_name, p.contact_number, u.email 
      FROM " . TBL_STUDENTS . " s
      LEFT JOIN " . TBL_PARENTS . " p ON s.student_id = p.student_id
@@ -38,26 +56,36 @@ define('SQL_GET_STUDENT',
      WHERE s.student_id = ?"
 );
 
-define('SQL_UPDATE_STUDENT',
-    "UPDATE " . TBL_STUDENTS . 
-    " SET first_name = ?, middle_name = ?, last_name = ?, 
+
+define(
+    'SQL_GET_STUDENT_BY_ID',
+    "SELECT id, email, password, first_name, middle_name, last_name, grade_level, section from students where id = ?"
+);
+
+define(
+    'SQL_UPDATE_STUDENT',
+    "UPDATE " . TBL_STUDENTS .
+        " SET first_name = ?, middle_name = ?, last_name = ?, 
           grade_level = ?, section = ?, phone_number = ?
      WHERE student_id = ?"
 );
 
-define('SQL_UPDATE_PARENT',
-    "UPDATE " . TBL_PARENTS . 
-    " SET parent_name = ?, contact_number = ?
+define(
+    'SQL_UPDATE_PARENT',
+    "UPDATE " . TBL_PARENTS .
+        " SET parent_name = ?, contact_number = ?
      WHERE student_id = ?"
 );
 
-define('SQL_UPDATE_USER',
-    "UPDATE " . TBL_USERS . 
-    " SET email = ?
+define(
+    'SQL_UPDATE_USER',
+    "UPDATE " . TBL_USERS .
+        " SET email = ?
      WHERE id = (SELECT user_id FROM " . TBL_STUDENTS . " WHERE student_id = ?)"
 );
 
-define('SQL_DELETE_STUDENT',
+define(
+    'SQL_DELETE_STUDENT',
     "DELETE s, p, u 
      FROM " . TBL_STUDENTS . " s
      LEFT JOIN " . TBL_PARENTS . " p ON s.student_id = p.student_id
@@ -72,11 +100,14 @@ define('SQL_DELETE_STUDENT',
 //      LEFT JOIN " . TBL_STUDENTS . " s ON u.id = s.user_id
 //      WHERE u.email = ? AND u.password = ?"
 // );
-define('SQL_STUDENT_LOGIN',
-    "SELECT email, password, first_name, middle_name, last_name from students where email = ? and password = ?"
+define(
+    'SQL_STUDENT_LOGIN',
+    "SELECT id, email, password, first_name, middle_name, last_name from students where email = ? and password = ?"
 );
+
 // Search Queries
-define('SQL_SEARCH_STUDENTS',
+define(
+    'SQL_SEARCH_STUDENTS',
     "SELECT s.*, p.parent_name, p.contact_number 
      FROM " . TBL_STUDENTS . " s
      LEFT JOIN " . TBL_PARENTS . " p ON s.student_id = p.student_id
@@ -84,14 +115,45 @@ define('SQL_SEARCH_STUDENTS',
 );
 
 // List Queries
-define('SQL_LIST_STUDENTS',
+
+define(
+    'SQL_LIST_STUDENTS',
     "SELECT s.*, p.parent_name, p.contact_number 
      FROM " . TBL_STUDENTS . " s
      LEFT JOIN " . TBL_PARENTS . " p ON s.student_id = p.student_id
      ORDER BY s.grade_level, s.section, s.last_name"
 );
 
-define('SQL_LIST_STUDENTS_BY_GRADE',
+define(
+    'SQL_LIST_COMPLAINTS_CONCERNS',
+    "SELECT * FROM " . TBL_COMPLAINTS_CONCERNS . " ORDER BY date_created DESC"
+);
+
+define(
+    'SQL_LIST_COMPLAINTS_CONCERNS_BY_STUDENT',
+    "SELECT * FROM " . TBL_COMPLAINTS_CONCERNS . " WHERE student_id = ?"
+);
+
+define(
+    'SQL_LIST_COMPLAINTS_CONCERNS_BY_ID',
+    "SELECT * FROM " . TBL_COMPLAINTS_CONCERNS . " WHERE id = ?"
+);
+
+
+define(
+    'SQL_SUM_LIST_COMPLAINTS_CONCERNS_BY_STUDENT',
+    "SELECT COUNT(*) FROM " . TBL_COMPLAINTS_CONCERNS . " AS total_complaints WHERE student_id = ?"
+);
+
+define(
+    'SQL_SUM_LIST_COMPLAINTS_CONCERNS_BY_STUDENT_STATUS',
+    "SELECT COUNT(*) FROM " . TBL_COMPLAINTS_CONCERNS . " AS total_complaints WHERE student_id = ? AND status = ?"
+);
+
+
+
+define(
+    'SQL_LIST_STUDENTS_BY_GRADE',
     "SELECT s.*, p.parent_name, p.contact_number 
      FROM " . TBL_STUDENTS . " s
      LEFT JOIN " . TBL_PARENTS . " p ON s.student_id = p.student_id
@@ -100,9 +162,67 @@ define('SQL_LIST_STUDENTS_BY_GRADE',
 );
 
 // Password Reset Query
-define('SQL_UPDATE_PASSWORD',
-    "UPDATE " . TBL_USERS . 
-    " SET password = ?
+define(
+    'SQL_UPDATE_PASSWORD',
+    "UPDATE " . TBL_USERS .
+        " SET password = ?
      WHERE email = ?"
 );
-?>
+
+//Lost Item
+define('SQL_INSERT_LOST_ITEMS', "INSERT INTO " . TBL_LOST_ITEMS . " (
+    student_id,
+    item_name,
+    category,
+    date_lost,
+    time_lost,
+    location,
+    description,
+    photo,
+    mime_type,
+    receive_sms,
+    phone_number,
+    status,
+    date,
+    time
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+define('SQL_UPDATE_LOST_ITEMS', "UPDATE " . TBL_LOST_ITEMS . " SET
+    student_id = ?,
+    item_name = ?,
+    category = ?,
+    date_lost = ?,
+    time_lost = ?,
+    location = ?,
+    description = ?,
+    photo = ?,
+    mime_type = ?,
+    receive_sms = ?,
+    phone_number = ?,
+    status = ?,
+    date = ?,
+    time = ?
+    WHERE id = ? ");
+
+
+
+define('SQL_GET_LOST_ITEMS', "SELECT * FROM " . TBL_LOST_ITEMS . "  WHERE student_id = ? ORDER BY date_reported DESC, time_reported DESC");
+
+define('SQL_GET_LOST_ITEMS_BY_ID', "SELECT * FROM " . TBL_LOST_ITEMS . "  WHERE id = ?");
+
+define('SQL_UPDATE_LOST_ITEM_STATUS', "UPDATE " . TBL_LOST_ITEMS . " SET status = ? WHERE id = ? AND student_id = ?");
+
+define(
+    'SQL_LIST_LOST_ITEMS_BY_STUDENT',
+    "SELECT * FROM " . TBL_LOST_ITEMS . " WHERE student_id = ?"
+);
+
+define(
+    'SQL_SUM_LIST_LOST_ITEMS_BY_STUDENT',
+    "SELECT COUNT(*) FROM " . TBL_LOST_ITEMS . " AS total_lost_items WHERE student_id = ?"
+);
+
+define(
+    'SQL_SUM_LIST_LOST_ITEMS_BY_STUDENT_STATUS',
+    "SELECT COUNT(*) FROM " . TBL_LOST_ITEMS . " AS total_lost_items WHERE student_id = ? AND status = ?"
+);
