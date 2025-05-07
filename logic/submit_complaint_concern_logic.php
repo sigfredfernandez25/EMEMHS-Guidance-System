@@ -1,6 +1,7 @@
 <?php
 require_once 'sql_querries.php';
 require_once 'db_connection.php';
+require_once 'notification_logic.php';
 session_start();
 
 $date = date('Y-m-d');
@@ -25,6 +26,12 @@ try {
     }
     $status = 'pending';
     $student_id = $_SESSION['student_id'];
+    if ($student_id === 0 || $student_id === null){
+        echo "<script>
+        alert('Your complaint hasasdddddddddddddddd.');
+
+    </script>";
+    }
     $evidence = null;
     $imageType = null;
 
@@ -62,7 +69,6 @@ try {
             $rowId
         ]);
     } else if ($transacType == "insert") {
-
         $stmt->execute([
             $student_id,
             $insertType,
@@ -74,15 +80,35 @@ try {
             $date,
             $time,
         ]);
+        
+        // Get the last inserted complaint ID
+        $complaint_id = $pdo->lastInsertId();
+
+        // Get the student's name for the notification
+        $stmt = $pdo->prepare("SELECT first_name, last_name FROM students WHERE id = ?");
+        $stmt->execute([$student_id]);
+        $student = $stmt->fetch(PDO::FETCH_ASSOC);
+        $student_name = $student['first_name'] . ' ' . $student['last_name'];
+
+        if ($student) {
+            $success = createAdminNotif($complaint_id, $student_name, $insertType);
+            if ($success) {
+                echo "[DEBUG] Notification successfully created.<br>";
+                // Comment out the redirect
+                // echo "<script>window.location.href = '../pages/student_dashboard.php';</script>";
+            } else {
+                echo "[DEBUG] Failed to create notification.<br>";
+            }
+        }
+        
+        
     }
-
-
 
     $pdo->commit();
 
     echo "<script>
         alert('Your complaint has been submitted.');
-        window.location.href = '../pages/student_dashboard.php';
+        window.location.href = '../pages/complaint-concern.php';
     </script>";
     exit();
 } catch (Exception $e) {

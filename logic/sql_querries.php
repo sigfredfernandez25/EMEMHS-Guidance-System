@@ -3,8 +3,86 @@
 define('TBL_STUDENTS', 'students');
 define('TBL_PARENTS', 'parents');
 define('TBL_COMPLAINTS_CONCERNS', 'complaints_concerns');
-define('TBL_USERS', 'tbl_users');
+define('TBL_USERS', 'users');
 define('TBL_LOST_ITEMS', 'lost_items');
+define('TBL_NOTIFICATIONS', 'notifications');
+
+// Notification Queries
+define(
+    'SQL_INSERT_NOTIFICATION',
+    "INSERT INTO " . TBL_NOTIFICATIONS . " (
+        user_id,
+        reference_id,
+        reference_type,
+        type,
+        message,
+        is_read,
+        date_created,
+        time_created
+    ) VALUES (?, ?, ?, ?, ?, 0, ?, ?)"
+);
+
+define(
+    'SQL_GET_STUDENT_NOTIFICATIONS',
+    "SELECT n.*, 
+        CASE 
+            WHEN n.reference_type = 'complaint' THEN cc.type
+            WHEN n.reference_type = 'lost_item' THEN li.category
+        END as reference_type_detail,
+        CASE 
+            WHEN n.reference_type = 'complaint' THEN cc.status
+            WHEN n.reference_type = 'lost_item' THEN li.status
+        END as reference_status,
+        CASE 
+            WHEN n.reference_type = 'complaint' THEN cc.description
+            WHEN n.reference_type = 'lost_item' THEN li.description
+        END as description,
+        CASE 
+            WHEN n.reference_type = 'lost_item' THEN li.item_name
+            ELSE NULL
+        END as item_name,
+        CASE 
+            WHEN n.reference_type = 'lost_item' THEN li.location
+            ELSE NULL
+        END as location_found,
+        CASE 
+            WHEN n.reference_type = 'complaint' THEN cc.evidence
+            WHEN n.reference_type = 'lost_item' THEN li.photo
+            ELSE NULL
+        END as photo,
+        CASE 
+            WHEN n.reference_type = 'complaint' THEN cc.mime_type
+            WHEN n.reference_type = 'lost_item' THEN li.mime_type
+            ELSE NULL
+        END as mime_type
+     FROM " . TBL_NOTIFICATIONS . " n
+     LEFT JOIN " . TBL_COMPLAINTS_CONCERNS . " cc ON n.reference_id = cc.id AND n.reference_type = 'complaint'
+     LEFT JOIN " . TBL_LOST_ITEMS . " li ON n.reference_id = li.id AND n.reference_type = 'lost_item'
+     WHERE n.user_id = ?
+     ORDER BY n.date_created DESC, n.time_created DESC"
+);
+
+define(
+    'SQL_GET_UNREAD_NOTIFICATIONS_COUNT',
+    "SELECT COUNT(*) as unread_count
+     FROM " . TBL_NOTIFICATIONS . "
+     WHERE user_id = ? AND is_read = 0"
+);
+
+define(
+    'SQL_MARK_NOTIFICATION_AS_READ',
+    "UPDATE " . TBL_NOTIFICATIONS . "
+     SET is_read = 1
+     WHERE id = ? AND user_id = ?"
+);
+
+define(
+    'SQL_MARK_ALL_NOTIFICATIONS_AS_READ',
+    "UPDATE " . TBL_NOTIFICATIONS . "
+     SET is_read = 1
+     WHERE user_id = ? AND is_read = 0"
+);
+
 // SQL Query Constants for Students Registration
 define(
     'SQL_CHECK_EMAIL_EXISTS',
@@ -30,14 +108,14 @@ define(
 define(
     'SQL_INSERT_USER',
     "INSERT INTO " . TBL_USERS . " (email, password, role) 
-     VALUES (?, ?, 'student')"
+     VALUES (?, ?, ?)"
 );
 
 define(
     'SQL_INSERT_STUDENT',
     "INSERT INTO " . TBL_STUDENTS .
-        " (first_name, middle_name, last_name, grade_level, section, email, phone_number, password) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        " (user_id, first_name, middle_name, last_name, grade_level, section, phone_number) 
+     VALUES (?, ?, ?, ?, ?, ?, ?)"
 );
 
 define(
@@ -49,11 +127,11 @@ define(
 
 define(
     'SQL_GET_STUDENT',
-    "SELECT s.*, p.parent_name, p.contact_number, u.email 
+    "SELECT s.*, p.parent_name, p.contact_number, u.email, u.password
      FROM " . TBL_STUDENTS . " s
-     LEFT JOIN " . TBL_PARENTS . " p ON s.student_id = p.student_id
+     LEFT JOIN " . TBL_PARENTS . " p ON s.id = p.student_id
      LEFT JOIN " . TBL_USERS . " u ON s.user_id = u.id
-     WHERE s.student_id = ?"
+     WHERE s.id = ?"
 );
 
 
@@ -93,17 +171,17 @@ define(
      WHERE s.student_id = ?"
 );
 
-// Authentication Queries
-// define('SQL_LOGIN',
-//     "SELECT u.id, u.email, u.role, s.student_id, s.first_name, s.last_name 
-//      FROM " . TBL_USERS . " u
-//      LEFT JOIN " . TBL_STUDENTS . " s ON u.id = s.user_id
-//      WHERE u.email = ? AND u.password = ?"
-// );
-define(
-    'SQL_STUDENT_LOGIN',
-    "SELECT id, email, password, first_name, middle_name, last_name from students where email = ? and password = ?"
+
+define('SQL_LOGIN',
+    "SELECT u.id as user_id, u.email, u.role, s.id as student_id, s.first_name, s.last_name 
+     FROM " . TBL_USERS . " u
+     LEFT JOIN " . TBL_STUDENTS . " s ON u.id = s.user_id
+     WHERE u.email = ? AND u.password = ?"
 );
+// define(
+//     'SQL_LOGIN',
+//     "SELECT id, student_id from ".TBL_USERS." where email = ? and password = ?"
+// );
 
 // Search Queries
 define(
@@ -126,8 +204,11 @@ define(
 
 define(
     'SQL_LIST_COMPLAINTS_CONCERNS',
-    "SELECT * FROM " . TBL_COMPLAINTS_CONCERNS . " ORDER BY date_created DESC"
-);
+    "SELECT cc.*, s.first_name, s.last_name,  s.grade_level, s.section
+    FROM " . TBL_COMPLAINTS_CONCERNS . " cc
+    JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
+    ORDER BY cc.date_created DESC"
+    );
 
 define(
     'SQL_LIST_COMPLAINTS_CONCERNS_BY_STUDENT',
@@ -139,7 +220,10 @@ define(
     "SELECT * FROM " . TBL_COMPLAINTS_CONCERNS . " WHERE id = ?"
 );
 
-
+define(
+    'SQL_SUM_LIST_COMPLAINTS_CONCERNS_BY_STATUS',
+    "SELECT COUNT(*) FROM " . TBL_COMPLAINTS_CONCERNS . " AS total_complaints WHERE status = ?"
+);
 define(
     'SQL_SUM_LIST_COMPLAINTS_CONCERNS_BY_STUDENT',
     "SELECT COUNT(*) FROM " . TBL_COMPLAINTS_CONCERNS . " AS total_complaints WHERE student_id = ?"
@@ -211,6 +295,12 @@ define('SQL_GET_LOST_ITEMS', "SELECT * FROM " . TBL_LOST_ITEMS . "  WHERE studen
 define('SQL_GET_LOST_ITEMS_BY_ID', "SELECT * FROM " . TBL_LOST_ITEMS . "  WHERE id = ?");
 
 define('SQL_UPDATE_LOST_ITEM_STATUS', "UPDATE " . TBL_LOST_ITEMS . " SET status = ? WHERE id = ? AND student_id = ?");
+
+define(
+    'SQL_LIST_LOST_ITEMS_BY_STATUS',
+    "SELECT * FROM " . TBL_LOST_ITEMS . " WHERE status = ?"
+);
+
 
 define(
     'SQL_LIST_LOST_ITEMS_BY_STUDENT',

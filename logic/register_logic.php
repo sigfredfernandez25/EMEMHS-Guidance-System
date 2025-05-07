@@ -13,7 +13,7 @@ try {
     $phone = $_POST['phone'];
     $parent_name = $_POST['parent_name'];
     $parent_contact = $_POST['parent_contact'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash the password
+    $password = $_POST['password'];
     // Start transaction
     $pdo->beginTransaction();
     
@@ -24,21 +24,28 @@ try {
     //     throw new Exception("Email already exists");
     // }
     
-    
+    $stmt = $pdo->prepare(SQL_INSERT_USER);
+    $stmt->execute([
+        $email,
+        $password,
+        "student"
+    ]);
+    $userId = $pdo->lastInsertId();
     // Insert student
+ 
     $stmt = $pdo->prepare(SQL_INSERT_STUDENT);
     $stmt->execute([
+        $userId,
         $first_name,
         $middle_name,
         $last_name,
         $grade_level,
         $section,
-        $email,
         $phone,
-        $password
+
     ]);
     $student_id = $pdo->lastInsertId();
-    
+ 
     // Insert parent
     $stmt = $pdo->prepare(SQL_INSERT_PARENT);
     $stmt->execute([
