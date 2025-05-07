@@ -9,7 +9,7 @@ if (!isset($_SESSION['isLoggedIn'])){
 $student_id = $_SESSION['student_id'];
 
 $student_id = $_SESSION['student_id'];
-$stmt = $pdo->prepare(SQL_GET_STUDENT_BY_ID);
+$stmt = $pdo->prepare(SQL_GET_STUDENT);
 $stmt->execute([$student_id]);
 $studentDetails = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>

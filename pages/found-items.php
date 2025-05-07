@@ -10,13 +10,23 @@ $student_id = $_SESSION['student_id'];
 $stmt = $pdo->prepare(SQL_LIST_LOST_ITEMS_BY_STUDENT);
 $stmt->execute([$student_id]);
 $lost_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Check if user is logged in and is admin
+if (!isset($_SESSION['isLoggedIn']) || $_SESSION['role'] !== 'admin') {
+    header("Location: index.php");
+    exit();
+}
 $foundItems = [];
 try {
     // Get all found items
     $stmt = $pdo->prepare("
-        SELECT * from lost_items where student_id = ?
+        SELECT li.*, s.first_name, s.last_name, s.student_id as student_number
+        FROM " . TBL_LOST_ITEMS . " li
+        LEFT JOIN " . TBL_STUDENTS . " s ON li.student_id = s.id
+        WHERE li.status = 'found'
+        ORDER BY li.date_created DESC
     ");
-    $stmt->execute([$student_id]);
+    $stmt->execute();
     $foundItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
     error_log("Error fetching found items: " . $e->getMessage());
@@ -92,77 +102,13 @@ try {
 </head>
 
 <body class="min-h-screen">
-    <?php include 'navigation.php'; ?>
+    <?php include 'navigation-admin.php'; ?>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-2xl md:text-3xl font-bold text-[#800000]">Your Lost Items</h1>
-            <a href="lost-item-form.php" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold">
-                Report a Lost Item
-            </a>
-        </div>
-
-        <div class="table-container">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Name</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Photo</th>
-                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <?php if (!empty($lost_items)): ?>
-                            <?php foreach ($lost_items as $item): ?>
-                                <tr class="hover:bg-gray-50">
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $item['id']; ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $item['item_name']; ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $item['category']; ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <span class="status-badge status-<?php echo strtolower($item['status']); ?>">
-                                            <?php echo ucfirst($item['status']); ?>
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $item['date']; ?></td>
-                                    <td class="px-6 py-4 whitespace-nowrap">
-                                        <?php if (!empty($item['photo']) && !empty($item['mime_type'])): ?>
-                                            <img src="data:<?php echo $item['mime_type']; ?>;base64,<?php echo base64_encode($item['photo']); ?>" 
-                                                 alt="Item Photo" 
-                                                 class="w-16 h-16 object-cover rounded-lg shadow-sm" />
-                                        <?php else: ?>
-                                            <span class="text-sm text-gray-500">No Image</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <form action="lost-item-form.php" method="POST" class="inline">
-                                            <input type="hidden" name="user" value="<?= $item['id'] ?>">
-                                            <button type="submit" class="btn-secondary text-white px-4 py-2 rounded-lg text-sm">
-                                                Edit
-                                            </button>
-                                        </form>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
-                                    No lost items found
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
 
         <div class="mt-8">
             <h2 class="text-3xl font-bold text-[#800000] mb-2">Found Items</h2>
-            <p class="text-gray-600">Here are your lost items that has been found</p>
+            <p class="text-gray-600">View and manage all found items in the system</p>
         </div>
 
         <?php if (empty($foundItems)): ?>
@@ -220,10 +166,29 @@ try {
                                 <div>
                                     <p class="text-sm font-medium text-gray-500">Date Found</p>
                                     <p class="text-sm text-gray-900">
-                                        <?php echo date('F j, Y', strtotime($item['date'])); ?>
+                                        <?php echo date('F j, Y', strtotime($item['date_created'])); ?>
                                     </p>
                                 </div>
 
+                                <?php if (!empty($item['student_id'])): ?>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-500">Claimed By</p>
+                                        <p class="text-sm text-gray-900">
+                                            <?php echo htmlspecialchars($item['first_name'] . ' ' . $item['last_name']); ?>
+                                            <span class="text-gray-500">(<?php echo htmlspecialchars($item['student_number']); ?>)</span>
+                                        </p>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if (empty($item['student_id'])): ?>
+                                <div class="mt-4">
+                                    <button onclick="notifyStudent(<?php echo $item['id']; ?>)" 
+                                            class="w-full bg-[#800000] text-white px-4 py-2 rounded-lg hover:bg-[#a52a2a] transition-colors">
+                                        Notify Student
+                                    </button>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
