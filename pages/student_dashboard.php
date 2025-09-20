@@ -8,9 +8,30 @@ if (!isset($_SESSION['isLoggedIn'])){
 }
 $student_id = $_SESSION['student_id'];
 
-// Get notification count
-$unread_count = getUnreadNotificationsCount($student_id);
+// Get student details
+$stmt = $pdo->prepare("SELECT first_name FROM students WHERE id = ?");
+$stmt->execute([$student_id]);
+$student = $stmt->fetch(PDO::FETCH_ASSOC);
 
+// Get notification count
+$unread_count = getUnreadNotificationsCount($_SESSION['user']);
+
+// Get recent notifications
+$stmt = $pdo->prepare(SQL_GET_STUDENT_NOTIFICATIONS);
+$stmt->execute([$_SESSION['user']]);
+$notifications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get recent complaints
+$stmt = $pdo->prepare("SELECT * FROM complaints_concerns WHERE student_id = ? ORDER BY date_created DESC, time_created DESC LIMIT 3");
+$stmt->execute([$student_id]);
+$recent_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get recent lost items
+$stmt = $pdo->prepare("SELECT * FROM lost_items WHERE student_id = ? ORDER BY date DESC, time DESC LIMIT 3");
+$stmt->execute([$student_id]);
+$recent_lost_items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Get statistics
 $stmt = $pdo->prepare(SQL_SUM_LIST_COMPLAINTS_CONCERNS_BY_STUDENT);
 $stmt->execute([$student_id]);
 $total_complaints = $stmt->fetchColumn();
@@ -45,101 +66,50 @@ $found_lost_items = $stmt->fetchColumn();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Dashboard</title>
+    <title>Student Dashboard - EMEMHS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            background-color: #f8f9fa;
         }
 
-        .stat-card {
-            background: linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        .dashboard-card {
+            background: white;
             border-radius: 1rem;
             transition: all 0.3s ease;
-            position: relative;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #800000;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-top: 0.5rem;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
             overflow: hidden;
         }
 
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 4px;
-            background: linear-gradient(90deg, #800000, #a52a2a);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-        }
-
-        .stat-icon {
-            width: 48px;
-            height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            background: linear-gradient(135deg, rgba(128, 0, 0, 0.1) 0%, rgba(165, 42, 42, 0.1) 100%);
-        }
-
-        .section-title {
-            position: relative;
-            padding-left: 1rem;
-        }
-
-        .section-title::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
+        .progress-bar-fill {
             height: 100%;
-            width: 4px;
-            background: linear-gradient(to bottom, #800000, #a52a2a);
-            border-radius: 2px;
-        }
-
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-        }
-
-        .action-card {
-            background: white;
-            border-radius: 1rem;
-            padding: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .action-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .action-icon {
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 10px;
-            background: linear-gradient(135deg, rgba(128, 0, 0, 0.1) 0%, rgba(165, 42, 42, 0.1) 100%);
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            background: #800000;
+            transition: width 0.3s ease;
         }
 
         .notification-badge {
@@ -151,22 +121,39 @@ $found_lost_items = $stmt->fetchColumn();
             border-radius: 50%;
             padding: 2px 6px;
             font-size: 10px;
-            animation: pulse 2s infinite;
             border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
-        .notification-icon {
-            position: relative;
-            transition: all 0.3s ease;
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
         }
 
-        .notification-icon:hover {
-            transform: scale(1.1);
+        .status-pending {
+            background-color: #FEF3C7;
+            color: #92400E;
         }
 
-        .notification-icon.has-notifications {
-            color: #800000;
+        .status-scheduled {
+            background-color: #DBEAFE;
+            color: #1E40AF;
+        }
+
+        .status-resolved {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-found {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .quick-info-card {
+            background: linear-gradient(135deg, #800000 0%, #a52a2a 100%);
+            color: white;
         }
     </style>
 </head>
@@ -175,157 +162,224 @@ $found_lost_items = $stmt->fetchColumn();
     <?php include 'navigation.php'; ?>
 
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Welcome Section with Notification Bell -->
-        <div class="mb-8 flex justify-between items-center">
+        <!-- Welcome Section -->
+        <div class="flex justify-between items-center mb-8">
             <div>
-                <h1 class="text-3xl md:text-4xl font-bold text-[#800000] mb-2">Welcome Back!</h1>
-                <p class="text-gray-600">Here's what's happening with your complaints and lost items.</p>
+                <h1 class="text-2xl font-bold text-gray-800">Welcome, <?= htmlspecialchars($student['first_name']) ?>!</h1>
+                <p class="text-gray-600 mt-1">
+                    You have <?= $pending_complaints ?> unresolved concerns and <?= $pending_lost_items ?> pending lost item reports.
+                </p>
             </div>
-            <a href="notifications.php" class="notification-icon <?php echo $unread_count > 0 ? 'has-notifications' : ''; ?>">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-600 hover:text-[#800000] transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <?php if ($unread_count > 0): ?>
-                    <span class="notification-badge"><?php echo $unread_count; ?></span>
-                <?php endif; ?>
-            </a>
+            <div class="flex items-center space-x-4">
+                <a href="profile.php" class="text-sm text-gray-600 hover:text-[#800000] flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    View Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Info Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="quick-info-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-white/80">Total Complaints</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= $total_complaints ?></h3>
+                    </div>
+                    <div class="p-3 bg-white/10 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm">
+                    <span class="text-white/80"><?= $resolved_complaints ?> resolved</span>
+                    <span class="mx-2 text-white/60">•</span>
+                    <span class="text-white/80"><?= $pending_complaints ?> pending</span>
+                </div>
+            </div>
+
+            <div class="quick-info-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-white/80">Lost Items</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= $total_lost_items ?></h3>
+                    </div>
+                    <div class="p-3 bg-white/10 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm">
+                    <span class="text-white/80"><?= $found_lost_items ?> found</span>
+                    <span class="mx-2 text-white/60">•</span>
+                    <span class="text-white/80"><?= $pending_lost_items ?> pending</span>
+                </div>
+            </div>
+
+            <div class="quick-info-card rounded-xl p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-white/80">Scheduled Sessions</p>
+                        <h3 class="text-2xl font-bold mt-1"><?= $scheduled_complaints ?></h3>
+                    </div>
+                    <div class="p-3 bg-white/10 rounded-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-sm">
+                    <span class="text-white/80">Next session: <?= $scheduled_complaints > 0 ? 'Scheduled' : 'None' ?></span>
+                </div>
+            </div>
         </div>
 
         <!-- Quick Actions -->
-        <div class="mb-8">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
-            <div class="quick-actions">
-                <a href="complaint-concern-form.php" class="action-card">
-                    <div class="action-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800">New Complaint</h3>
-                        <p class="text-sm text-gray-600">Submit a new complaint or concern</p>
-                    </div>
-                </a>
-                <a href="lost-item-form.php" class="action-card">
-                    <div class="action-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800">Report Lost Item</h3>
-                        <p class="text-sm text-gray-600">Report a lost item</p>
-                    </div>
-                </a>
-                <a href="notifications.php" class="action-card">
-                    <div class="action-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800">Notifications</h3>
-                        <p class="text-sm text-gray-600">Check your updates</p>
-                    </div>
-                </a>
-            </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <a href="complaint-concern-form.php" class="dashboard-card p-6 flex items-center space-x-4">
+                <div class="p-3 bg-[#800000]/10 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800">New Complaint</h3>
+                    <p class="text-sm text-gray-600">Submit a new complaint or concern</p>
+                </div>
+            </a>
+
+            <a href="lost-item-form.php" class="dashboard-card p-6 flex items-center space-x-4">
+                <div class="p-3 bg-[#800000]/10 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800">Report Lost Item</h3>
+                    <p class="text-sm text-gray-600">Report a lost or found item</p>
+                </div>
+            </a>
         </div>
 
-        <!-- Complaint Statistics Section -->
-        <section class="mb-8">
-            <h2 class="section-title text-xl md:text-2xl font-semibold text-gray-800 mb-6">Complaint Statistics</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="stat-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                        </div>
-                        <span class="text-2xl font-bold text-[#800000]"><?= $total_complaints ?></span>
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Recent Complaints -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Complaints Overview -->
+                <div class="dashboard-card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800">Recent Complaints</h2>
+                        <a href="complaint-concern.php" class="text-sm text-[#800000] hover:underline">View All</a>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-700">Total Complaints</h3>
+                    <div class="space-y-4">
+                        <?php if (empty($recent_complaints)): ?>
+                            <p class="text-gray-500 text-center py-4">No recent complaints</p>
+                        <?php else: ?>
+                            <?php foreach ($recent_complaints as $complaint): ?>
+                                <div class="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="font-medium text-gray-800"><?= htmlspecialchars($complaint['type']) ?></h3>
+                                            <p class="text-sm text-gray-600 mt-1"><?= htmlspecialchars(substr($complaint['description'], 0, 100)) ?>...</p>
+                                            <p class="text-xs text-gray-500 mt-2">
+                                                Submitted on <?= date('M d, Y', strtotime($complaint['date_created'])) ?>
+                                            </p>
+                                        </div>
+                                        <span class="status-badge status-<?= strtolower($complaint['status']) ?>">
+                                            <?= ucfirst($complaint['status']) ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
-                <div class="stat-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <span class="text-2xl font-bold text-[#800000]"><?= $pending_complaints ?></span>
+                <!-- Lost Items Overview -->
+                <div class="dashboard-card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800">Recent Lost Items</h2>
+                        <a href="lost_item.php" class="text-sm text-[#800000] hover:underline">View All</a>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-700">Pending</h3>
-                </div>
-
-                <div class="stat-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                            </svg>
-                        </div>
-                        <span class="text-2xl font-bold text-[#800000]"><?= $scheduled_complaints ?></span>
+                    <div class="space-y-4">
+                        <?php if (empty($recent_lost_items)): ?>
+                            <p class="text-gray-500 text-center py-4">No recent lost items</p>
+                        <?php else: ?>
+                            <?php foreach ($recent_lost_items as $item): ?>
+                                <div class="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="font-medium text-gray-800"><?= htmlspecialchars($item['item_name']) ?></h3>
+                                            <p class="text-sm text-gray-600 mt-1"><?= htmlspecialchars($item['description']) ?></p>
+                                            <p class="text-xs text-gray-500 mt-2">
+                                                Reported on <?= date('M d, Y', strtotime($item['date'])) ?>
+                                            </p>
+                                        </div>
+                                        <span class="status-badge status-<?= strtolower($item['status']) ?>">
+                                            <?= ucfirst($item['status']) ?>
+                                        </span>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-700">Scheduled</h3>
-                </div>
-
-                <div class="stat-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                        </div>
-                        <span class="text-2xl font-bold text-[#800000]"><?= $resolved_complaints ?></span>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-700">Resolved</h3>
                 </div>
             </div>
-        </section>
 
-        <!-- Lost Item Statistics Section -->
-        <section>
-            <h2 class="section-title text-xl md:text-2xl font-semibold text-gray-800 mb-6">Lost Item Statistics</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div class="stat-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                        </div>
-                        <span class="text-2xl font-bold text-[#800000]"><?= $total_lost_items ?></span>
+            <!-- Right Column -->
+            <div class="space-y-6">
+                <!-- Notifications Panel -->
+                <div class="dashboard-card p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-lg font-semibold text-gray-800">Notifications</h2>
+                        <a href="notifications.php" class="text-sm text-[#800000] hover:underline">View All</a>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-700">Total Lost Items</h3>
+                    <div class="space-y-4">
+                        <?php if (empty($notifications)): ?>
+                            <p class="text-gray-500 text-center py-4">No new notifications</p>
+                        <?php else: ?>
+                            <?php foreach (array_slice($notifications, 0, 5) as $notification): ?>
+                                <div class="border-b border-gray-200 pb-4 last:border-0 last:pb-0">
+                                    <p class="text-sm text-gray-800"><?= htmlspecialchars($notification['message']) ?></p>
+                                    <p class="text-xs text-gray-500 mt-2">
+                                        <?= date('M d, Y', strtotime($notification['date_created'])) ?>
+                                    </p>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </div>
                 </div>
 
-                <div class="stat-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <!-- Quick Links -->
+                <div class="dashboard-card p-6">
+                    <h2 class="text-lg font-semibold text-gray-800 mb-4">Quick Links</h2>
+                    <div class="space-y-3">
+                        <a href="guidance-resources.php" class="flex items-center text-gray-600 hover:text-[#800000]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                             </svg>
-                        </div>
-                        <span class="text-2xl font-bold text-[#800000]"><?= $pending_lost_items ?></span>
-                    </div>
-                    <h3 class="text-lg font-medium text-gray-700">Pending</h3>
-                </div>
-
-                <div class="stat-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="stat-icon">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            Guidance Resources
+                        </a>
+                        <a href="faq.php" class="flex items-center text-gray-600 hover:text-[#800000]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
-                        </div>
-                        <span class="text-2xl font-bold text-[#800000]"><?= $found_lost_items ?></span>
+                            FAQ
+                        </a>
+                        <a href="contact.php" class="flex items-center text-gray-600 hover:text-[#800000]">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                            </svg>
+                            Contact Guidance
+                        </a>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-700">Found</h3>
                 </div>
             </div>
-        </section>
+        </div>
     </main>
 
     <script src="js/mobile-menu.js"></script>

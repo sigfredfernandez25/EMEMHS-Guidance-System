@@ -114,8 +114,8 @@ define(
 define(
     'SQL_INSERT_STUDENT',
     "INSERT INTO " . TBL_STUDENTS .
-        " (user_id, first_name, middle_name, last_name, grade_level, section, phone_number) 
-     VALUES (?, ?, ?, ?, ?, ?, ?)"
+        " (user_id, first_name, middle_name, last_name, grade_level, section, phone_number, address) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
 );
 
 define(
@@ -204,11 +204,39 @@ define(
 
 define(
     'SQL_LIST_COMPLAINTS_CONCERNS',
-    "SELECT cc.*, s.first_name, s.last_name,  s.grade_level, s.section
+    "SELECT cc.*,
+            COALESCE(cc.severity, 'medium') as severity,
+            s.first_name, s.last_name, s.grade_level, s.section
     FROM " . TBL_COMPLAINTS_CONCERNS . " cc
     JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
-    ORDER BY cc.date_created DESC"
+    ORDER BY
+        CASE
+            WHEN COALESCE(cc.severity, 'medium') = 'urgent' THEN 1
+            WHEN COALESCE(cc.severity, 'medium') = 'high' THEN 2
+            WHEN COALESCE(cc.severity, 'medium') = 'medium' THEN 3
+            WHEN COALESCE(cc.severity, 'medium') = 'low' THEN 4
+            ELSE 5
+        END,
+        cc.date_created DESC"
     );
+define(
+    'SQL_LIST_PENDING_COMPLAINTS_CONCERNS',
+    "SELECT cc.*,
+            COALESCE(cc.severity, 'medium') as severity,
+            s.first_name, s.last_name, s.grade_level, s.section
+     FROM " . TBL_COMPLAINTS_CONCERNS . " cc
+     JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
+     WHERE cc.status = 'pending'
+     ORDER BY
+        CASE
+            WHEN COALESCE(cc.severity, 'medium') = 'urgent' THEN 1
+            WHEN COALESCE(cc.severity, 'medium') = 'high' THEN 2
+            WHEN COALESCE(cc.severity, 'medium') = 'medium' THEN 3
+            WHEN COALESCE(cc.severity, 'medium') = 'low' THEN 4
+            ELSE 5
+        END,
+        cc.date_created DESC"
+);
 
 define(
     'SQL_LIST_COMPLAINTS_CONCERNS_BY_STUDENT',
@@ -315,4 +343,159 @@ define(
 define(
     'SQL_SUM_LIST_LOST_ITEMS_BY_STUDENT_STATUS',
     "SELECT COUNT(*) FROM " . TBL_LOST_ITEMS . " AS total_lost_items WHERE student_id = ? AND status = ?"
+);
+
+// Claim functionality queries
+define(
+    'SQL_CLAIM_LOST_ITEM',
+    "UPDATE " . TBL_LOST_ITEMS . " SET
+        status = 'claimed',
+        claimed_at = NOW(),
+        claimed_by_student_id = ?,
+        claimant_photo = ?,
+        claimant_photo_mime_type = ?,
+        claim_evidence = ?
+     WHERE id = ? AND status = 'found'"
+);
+
+define(
+    'SQL_GET_CLAIMABLE_ITEMS',
+    "SELECT li.*, s.first_name, s.last_name, s.grade_level, s.section
+     FROM " . TBL_LOST_ITEMS . " li
+     LEFT JOIN " . TBL_STUDENTS . " s ON li.student_id = s.id
+     WHERE li.status = 'found' AND li.claimed_by_student_id IS NULL
+     ORDER BY li.date DESC, li.time DESC"
+);
+
+define(
+    'SQL_GET_CLAIMED_ITEMS',
+    "SELECT li.*, s.first_name, s.last_name, s.grade_level, s.section,
+           cs.first_name as claimed_by_first_name, cs.last_name as claimed_by_last_name,
+           li.claimant_photo, li.claimant_photo_mime_type
+     FROM " . TBL_LOST_ITEMS . " li
+     LEFT JOIN " . TBL_STUDENTS . " s ON li.student_id = s.id
+     LEFT JOIN " . TBL_STUDENTS . " cs ON li.claimed_by_student_id = cs.id
+     WHERE li.status = 'claimed'
+     ORDER BY li.claimed_at DESC"
+);
+
+define(
+    'SQL_GET_LOST_ITEM_CLAIM_DETAILS',
+    "SELECT li.*, s.first_name, s.last_name, s.grade_level, s.section
+     FROM " . TBL_LOST_ITEMS . " li
+     LEFT JOIN " . TBL_STUDENTS . " s ON li.student_id = s.id
+     WHERE li.id = ? AND li.status = 'found'"
+);
+
+// Student Complaint Statistics
+define(
+    'SQL_GET_STUDENT_COMPLAINT_STATS',
+    "SELECT
+        COUNT(*) as total_complaints,
+        type,
+        COUNT(*) as type_count
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     WHERE student_id = ?
+     GROUP BY type
+     ORDER BY type_count DESC"
+);
+
+define(
+    'SQL_GET_STUDENT_MOST_COMMON_COMPLAINT',
+    "SELECT type, COUNT(*) as count
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     WHERE student_id = ?
+     GROUP BY type
+     ORDER BY count DESC
+     LIMIT 1"
+);
+
+// Analytics Queries
+define(
+    'SQL_GET_COMPLAINTS_TODAY',
+    "SELECT COUNT(*) as count
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     WHERE DATE(date_created) = CURDATE()"
+);
+
+define(
+    'SQL_GET_COMPLAINTS_LAST_7_DAYS',
+    "SELECT COUNT(*) as count
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     WHERE date_created >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)"
+);
+
+define(
+    'SQL_GET_COMPLAINTS_LAST_MONTH',
+    "SELECT COUNT(*) as count
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     WHERE date_created >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH)"
+);
+
+define(
+    'SQL_GET_COMPLAINTS_LAST_3_MONTHS',
+    "SELECT COUNT(*) as count
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     WHERE date_created >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)"
+);
+
+define(
+    'SQL_GET_COMPLAINTS_LAST_YEAR',
+    "SELECT COUNT(*) as count
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     WHERE date_created >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)"
+);
+
+// Monthly Analytics
+define(
+    'SQL_GET_MONTHLY_COMPLAINT_TRENDS',
+    "SELECT
+        YEAR(date_created) as year,
+        MONTH(date_created) as month,
+        COUNT(*) as complaint_count,
+        type,
+        COUNT(*) as type_count
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     GROUP BY YEAR(date_created), MONTH(date_created), type
+     ORDER BY year DESC, month DESC, type_count DESC"
+);
+
+define(
+    'SQL_GET_PEAK_MONTHS',
+    "SELECT
+        YEAR(date_created) as year,
+        MONTH(date_created) as month,
+        COUNT(*) as total_complaints,
+        MONTHNAME(date_created) as month_name
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     GROUP BY YEAR(date_created), MONTH(date_created)
+     ORDER BY total_complaints DESC
+     LIMIT 12"
+);
+
+// Complaint Type Distribution
+define(
+    'SQL_GET_COMPLAINT_TYPE_DISTRIBUTION',
+    "SELECT
+        type,
+        COUNT(*) as count,
+        ROUND((COUNT(*) * 100.0 / (SELECT COUNT(*) FROM " . TBL_COMPLAINTS_CONCERNS . ")), 2) as percentage
+     FROM " . TBL_COMPLAINTS_CONCERNS . "
+     GROUP BY type
+     ORDER BY count DESC"
+);
+
+// Student Complaint History with Details
+define(
+    'SQL_GET_STUDENT_COMPLAINT_HISTORY',
+    "SELECT
+        cc.*,
+        s.first_name,
+        s.last_name,
+        s.grade_level,
+        s.section
+     FROM " . TBL_COMPLAINTS_CONCERNS . " cc
+     JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
+     WHERE cc.student_id = ?
+     ORDER BY cc.date_created DESC, cc.time_created DESC"
 );

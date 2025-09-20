@@ -2,33 +2,55 @@
 // Check if user is logged in
 require_once '../logic/notification_logic.php';
 $isLoggedIn = isset($_SESSION['isLoggedIn']);
+
+// Get current page filename
+$current_page = basename($_SERVER['PHP_SELF']);
 ?>
 
-<nav class="bg-white shadow-lg sticky top-0">
+<nav class="bg-white shadow-lg sticky top-0 z-100">
     <div class="max-w-7xl mx-auto px-4">
-        <div class="flex justify-between h-16">
+        <div class="flex justify-between items-center h-16">
+            <!-- Logo Section -->
             <div class="flex items-center">
-                <span class="text-2xl font-bold text-[#800000]">EMEMHS</span>
+                <a href="student_dashboard.php" class="flex items-center no-underline">
+                    <img src="../image/ememhs-logo.png" alt="EMEMHS Logo" class="h-10 w-auto mr-2">
+                    <span class="text-md font-bold text-[#800000]">Guidance System</span>
+                </a>
             </div>
+
+            <!-- Center Navigation Links -->
             <div class="desktop-nav flex items-center space-x-8">
                 <?php if ($isLoggedIn): ?>
-                    <a href="student_dashboard.php" class="nav-link text-gray-700 hover:text-[#800000]">Home</a>
-                    <a href="complaint-concern.php" class="nav-link text-gray-700 hover:text-[#800000]">Complaint/Concern</a>
-                    <a href="lost_item.php" class="nav-link text-gray-700 hover:text-[#800000]">Lost Item</a>
-                    <a href="notifications.php" class="nav-link text-gray-700 hover:text-[#800000] relative">
-                        Notification
+                    <a href="student_dashboard.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] <?php echo ($current_page == 'student_dashboard.php') ? 'active' : ''; ?>">Home</a>
+                    <a href="complaint-concern.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] <?php echo ($current_page == 'complaint-concern.php') ? 'active' : ''; ?>">Complaint/Concern</a>
+                    <a href="lost_item.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] <?php echo ($current_page == 'lost_item.php') ? 'active' : ''; ?>">Lost Item</a>
+                    <a href="found-items.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] <?php echo ($current_page == 'found-items.php') ? 'active' : ''; ?>">Found Items</a>
+                <?php endif; ?>
+            </div>
+
+            <!-- Right Section -->
+            <div class="flex items-center space-x-6 hidden md:flex">
+                <?php if ($isLoggedIn): ?>
+                    <a href="notifications.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] relative <?php echo ($current_page == 'notifications.php') ? 'active' : ''; ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
                         <?php 
                         $unread_count = getUnreadNotificationsCount($_SESSION['user']);
                         if ($unread_count > 0): 
                         ?>
-                            <span class="notification-badge"><?php echo $unread_count; ?></span>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"><?php echo $unread_count; ?></span>
                         <?php endif; ?>
                     </a>
-                    <a href="profile.php" class="nav-link text-gray-700 hover:text-[#800000]">Profile</a>
-                    <a href="../logic/logout_logic.php" class="nav-link text-gray-700 hover:text-[#800000]">Logout</a>
+                    <a href="profile.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] <?php echo ($current_page == 'profile.php') ? 'active' : ''; ?>">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </a>
+                    <a href="../logic/logout_logic.php" class="text-sm bg-[#800000] text-white px-3 py-1.5 rounded-lg hover:bg-[#600000] transition-colors duration-300">Logout</a>
                 <?php else: ?>
-                    <a href="index.php" class="nav-link text-gray-700 hover:text-[#800000]">Login</a>
-                    <a href="register.php" class="nav-link text-gray-700 hover:text-[#800000]">Register</a>
+                    <a href="index.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] <?php echo ($current_page == 'index.php') ? 'active' : ''; ?>">Login</a>
+                    <a href="register.php" class="text-sm bg-[#800000] text-white px-3 py-1.5 rounded-lg hover:bg-[#600000] transition-colors duration-300">Register</a>
                 <?php endif; ?>
             </div>
         </div>
@@ -48,24 +70,41 @@ $isLoggedIn = isset($_SESSION['isLoggedIn']);
 <!-- Mobile Menu -->
 <div class="mobile-menu">
     <div class="flex justify-between items-center mb-8">
-        <span class="text-2xl font-bold text-[#800000]">EMEMHS</span>
+        <div class="flex items-center">
+            <img src="../images/ememhs-logo.png" alt="EMEMHS Logo" class="h-8 w-auto mr-2">
+            <span class="text-lg font-bold text-[#800000]">EMEMHS</span>
+        </div>
         <button class="close-menu p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
     </div>
-    <div class="flex flex-col space-y-4">
+    <div class="flex flex-col space-y-3">
         <?php if ($isLoggedIn): ?>
-            <a href="student_dashboard.php" class="nav-link text-gray-700 hover:text-[#800000] text-lg py-2 px-4 rounded-lg hover:bg-gray-50">Home</a>
-            <a href="complaint-concern.php" class="nav-link text-gray-700 hover:text-[#800000] text-lg py-2 px-4 rounded-lg hover:bg-gray-50">Complaint/Concern</a>
-            <a href="lost_item.php" class="nav-link text-gray-700 hover:text-[#800000] text-lg py-2 px-4 rounded-lg hover:bg-gray-50">Lost Item</a>
-            <a href="notifications.php" class="nav-link text-gray-700 hover:text-[#800000] text-lg py-2 px-4 rounded-lg hover:bg-gray-50">Notification</a>
-            <a href="profile.php" class="nav-link text-gray-700 hover:text-[#800000] text-lg py-2 px-4 rounded-lg hover:bg-gray-50"></a>
-            <a href="../logic/logout_logic.php" class="nav-link text-gray-700 hover:text-[#800000] text-lg py-2 px-4 rounded-lg hover:bg-gray-50">Profile</a>
+            <a href="student_dashboard.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50">Home</a>
+            <a href="complaint-concern.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50">Complaint/Concern</a>
+            <a href="lost_item.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50">Lost Item</a>
+            <a href="found-items.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50">Found Items</a>
+            <a href="notifications.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                </svg>
+                Notifications
+                <?php if ($unread_count > 0): ?>
+                    <span class="ml-2 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"><?php echo $unread_count; ?></span>
+                <?php endif; ?>
+            </a>
+            <a href="profile.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Profile
+            </a>
+            <a href="../logic/logout_logic.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50">Logout</a>
         <?php else: ?>
-            <a href="index.php" class="nav-link text-gray-700 hover:text-[#800000] text-lg py-2 px-4 rounded-lg hover:bg-gray-50">Login</a>
-            <a href="register.php" class="nav-link text-gray-700 hover:text-[#800000] text-lg py-2 px-4 rounded-lg hover:bg-gray-50">Register</a>
+            <a href="index.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50">Login</a>
+            <a href="register.php" class="nav-link text-sm text-gray-700 hover:text-[#800000] py-2 px-4 rounded-lg hover:bg-gray-50">Register</a>
         <?php endif; ?>
     </div>
 </div>
@@ -73,11 +112,45 @@ $isLoggedIn = isset($_SESSION['isLoggedIn']);
 <style>
     .nav-link {
         transition: all 0.3s ease;
+        position: relative;
     }
 
     .nav-link:hover {
         color: #800000;
         transform: translateY(-2px);
+    }
+
+    .nav-link.active {
+        color: #800000;
+        font-weight: 600;
+    }
+
+    .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: #800000;
+        transform: scaleX(1);
+        transition: transform 0.3s ease;
+    }
+
+    .nav-link:not(.active)::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: #800000;
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .nav-link:hover::after {
+        transform: scaleX(1);
     }
 
     /* Mobile menu styles */

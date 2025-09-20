@@ -77,7 +77,7 @@ if (isset($_POST['user'])) {
             <form action="../logic/submit_complaint_concern_logic.php" method="POST" enctype="multipart/form-data" class="space-y-6">
                 <div class="space-y-2">
                     <label for="complaint_type" class="block text-sm font-medium text-gray-700">Type of Complaint/Concern</label>
-                    <select name="complaint_type" id="complaint_type" required 
+                    <select name="complaint_type" id="complaint_type" required
                             class="form-input w-full px-4 py-2 rounded-lg focus:outline-none">
                         <?php
                         if (!isset($selected_row['type']) || $selected_row['type'] == null) {
@@ -99,6 +99,28 @@ if (isset($_POST['user'])) {
                         <option value="career">Career Guidance</option>
                         <option value="others">Others</option>
                     </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label for="severity" class="block text-sm font-medium text-gray-700">Severity Level</label>
+                    <select name="severity" id="severity" required
+                            class="form-input w-full px-4 py-2 rounded-lg focus:outline-none">
+                        <?php
+                        $current_severity = $selected_row['severity'] ?? 'medium';
+                        $severities = [
+                            'low' => 'Low - General guidance needed',
+                            'medium' => 'Medium - Moderate concern',
+                            'high' => 'High - Urgent attention required',
+                            'urgent' => 'Urgent - Immediate intervention needed'
+                        ];
+
+                        foreach ($severities as $value => $label) {
+                            $selected = ($current_severity == $value) ? 'selected' : '';
+                            echo "<option value=\"$value\" $selected>$label</option>";
+                        }
+                        ?>
+                    </select>
+                    <p class="text-xs text-gray-500 mt-1">Select the severity level that best describes your situation</p>
                 </div>
 
                 <div class="space-y-2" id="other_specify_group" style="display: none;">

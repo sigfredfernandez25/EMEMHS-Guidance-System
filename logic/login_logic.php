@@ -9,14 +9,18 @@ try {
 
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare(SQL_LOGIN);
-    $stmt->execute([$username, $password]);
+    // First get the user with their password (not hashed compare)
+    $stmt = $pdo->prepare("SELECT u.id as user_id, u.email, u.password, u.role, 
+                                  s.id as student_id, s.first_name, s.last_name 
+                           FROM " . TBL_USERS . " u
+                           LEFT JOIN " . TBL_STUDENTS . " s ON u.id = s.user_id
+                           WHERE u.email = ?");
+    $stmt->execute([$username]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if ($stmt->rowCount() > 0) {
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
+    // Direct password check (no hashing)
+    if ($user && $password === $user['password']) {
         $_SESSION['user'] = $user['user_id'];
-        
         $_SESSION['email'] = $user['email'];
         $_SESSION['role'] = $user['role'];
         $_SESSION['isLoggedIn'] = true;
@@ -34,7 +38,7 @@ try {
         }
 
     } else {
-        echo "<script>alert('Invalid username or password'); window.location.href = '../pages/index.php';</script>";
+        echo "<script>alert('Invalid username or password'); window.location.href = '../pages/login.php';</script>";
     }
 } catch (Exception $e) {
     $pdo->rollBack();

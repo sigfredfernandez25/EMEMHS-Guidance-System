@@ -174,10 +174,8 @@ function createFoundItemNotification($student_id, $item_id, $item_name) {
     }
 }
 
-function createAdminNotif($complaint_id, $student_name, $complaint_type) {
+function createAdminNotif($item_id, $student_name, $action) {
     global $pdo;
-
-    echo "[DEBUG] createAdminNotif() called.<br>";
 
     try {
         $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
@@ -185,25 +183,22 @@ function createAdminNotif($complaint_id, $student_name, $complaint_type) {
         $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$admin) {
-            echo "[DEBUG] No admin found.<br>";
+            error_log("[ERROR] No admin found for notification");
             return false;
         }
 
         $adminId = $admin['id'];
-        $message = "New complaint from $student_name: $complaint_type";
+        $message = $student_name . " " . $action;
 
-        echo "[DEBUG] Admin ID: $adminId<br>";
-        echo "[DEBUG] Message: $message<br>";
-
-        $success = createNotification($adminId, $complaint_id, 'complaint', 'new_complaint', $message);
+        $success = createNotification($adminId, $item_id, 'lost_item', 'item_claimed', $message);
 
         if (!$success) {
-            echo "[DEBUG] createNotification failed.<br>";
+            error_log("[ERROR] createNotification failed for admin notification");
         }
 
         return $success;
     } catch (PDOException $e) {
-        echo "[DEBUG] Exception in createAdminNotif: " . $e->getMessage() . "<br>";
+        error_log("[ERROR] Exception in createAdminNotif: " . $e->getMessage());
         return false;
     }
 }

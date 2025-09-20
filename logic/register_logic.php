@@ -14,20 +14,25 @@ try {
     $parent_name = $_POST['parent_name'];
     $parent_contact = $_POST['parent_contact'];
     $password = $_POST['password'];
+    $address = $_POST['address'];
+
+    // Hash the password
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
     // Start transaction
     $pdo->beginTransaction();
     
     // Check if email already exists
-    // $stmt = $pdo->prepare(SQL_CHECK_EMAIL_EXISTS);
-    // $stmt->execute([$email]);
-    // if ($stmt->rowCount() > 0) {
-    //     throw new Exception("Email already exists");
-    // }
+    $stmt = $pdo->prepare(SQL_CHECK_EMAIL_EXISTS);
+    $stmt->execute([$email]);
+    if ($stmt->rowCount() > 0) {
+        throw new Exception("Email already exists");
+    }
     
     $stmt = $pdo->prepare(SQL_INSERT_USER);
     $stmt->execute([
         $email,
-        $password,
+        $hashed_password,
         "student"
     ]);
     $userId = $pdo->lastInsertId();
@@ -42,7 +47,7 @@ try {
         $grade_level,
         $section,
         $phone,
-
+        $address
     ]);
     $student_id = $pdo->lastInsertId();
  
@@ -58,7 +63,7 @@ try {
     $pdo->commit();
     
     // Redirect to index page after successful registration
-    header('Location: ../pages/index.php');
+    header('Location: ../pages/login.php');
     exit();
     
 } catch (Exception $e) {

@@ -158,7 +158,7 @@ try {
     }
     ?>
 
-    <main class="max-w-4xl mx-auto px-4 py-8">
+    <main class="max-w-4xl mx-auto px-4 py-8<?php echo ($role !== 'student') ? ' pl-[180px] lg:pl-[180px] md:pl-[0] sm:pl-[0]' : ''; ?>">
         <div class="mb-8 animate-fade-in">
             <div class="flex items-center justify-between">
                 <div>

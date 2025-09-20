@@ -17,9 +17,26 @@ try {
 
     $rowId = $_POST['isUpdate'];
     $type = $_POST['complaint_type'];
+    $severity = $_POST['severity'] ?? 'medium'; // Default to medium if not provided
     $other = $_POST['other_specify'];
     $description = $_POST['description'];
     $counselingDate = $_POST['counseling_date'];
+
+    // Check if severity column exists in database
+    try {
+        $checkColumnQuery = "SHOW COLUMNS FROM " . TBL_COMPLAINTS_CONCERNS . " LIKE 'severity'";
+        $stmt = $pdo->prepare($checkColumnQuery);
+        $stmt->execute();
+        $columnExists = $stmt->fetch();
+
+        if (!$columnExists) {
+            // If severity column doesn't exist, set to NULL so it uses default
+            $severity = null;
+        }
+    } catch (Exception $e) {
+        // If there's an error checking, assume column doesn't exist
+        $severity = null;
+    }
     $insertType = $type;
     if ($type === "others" && $other) {
         $insertType = $other;
@@ -56,30 +73,65 @@ try {
 
     $stmt = $pdo->prepare($queryUse);
     if ($transacType == "update") {
-        $stmt->execute([
-            $student_id,
-            $insertType,
-            $description,
-            $counselingDate,
-            $evidence,      // raw binary stored in BLOB column
-            $imageType,
-            $status,   // store MIME type so you can convert later to base64 if needed
-            $date,
-            $time,
-            $rowId
-        ]);
+        if ($severity !== null) {
+            // Include severity if column exists
+            $stmt->execute([
+                $student_id,
+                $insertType,
+                $severity,
+                $description,
+                $counselingDate,
+                $evidence,      // raw binary stored in BLOB column
+                $imageType,
+                $status,   // store MIME type so you can convert later to base64 if needed
+                $date,
+                $time,
+                $rowId
+            ]);
+        } else {
+            // Exclude severity if column doesn't exist
+            $stmt->execute([
+                $student_id,
+                $insertType,
+                $description,
+                $counselingDate,
+                $evidence,      // raw binary stored in BLOB column
+                $imageType,
+                $status,   // store MIME type so you can convert later to base64 if needed
+                $date,
+                $time,
+                $rowId
+            ]);
+        }
     } else if ($transacType == "insert") {
-        $stmt->execute([
-            $student_id,
-            $insertType,
-            $description,
-            $counselingDate,
-            $evidence,      // raw binary stored in BLOB column
-            $imageType,
-            $status,   // store MIME type so you can convert later to base64 if needed
-            $date,
-            $time,
-        ]);
+        if ($severity !== null) {
+            // Include severity if column exists
+            $stmt->execute([
+                $student_id,
+                $insertType,
+                $severity,
+                $description,
+                $counselingDate,
+                $evidence,      // raw binary stored in BLOB column
+                $imageType,
+                $status,   // store MIME type so you can convert later to base64 if needed
+                $date,
+                $time,
+            ]);
+        } else {
+            // Exclude severity if column doesn't exist
+            $stmt->execute([
+                $student_id,
+                $insertType,
+                $description,
+                $counselingDate,
+                $evidence,      // raw binary stored in BLOB column
+                $imageType,
+                $status,   // store MIME type so you can convert later to base64 if needed
+                $date,
+                $time,
+            ]);
+        }
         
         // Get the last inserted complaint ID
         $complaint_id = $pdo->lastInsertId();
@@ -100,6 +152,79 @@ try {
                 echo "[DEBUG] Failed to create notification.<br>";
             }
         }
+        $stmt = $pdo->prepare("SELECT contact_number, parent_name FROM parents WHERE student_id = ?");
+        $stmt->execute([$student_id]);
+        $parent = $stmt->fetch(PDO::FETCH_ASSOC);
+        $contact_number = $parent['contact_number'];
+        $parent_name = $parent['parent_name'];
+
+        if ($student && $parent && !empty($contact_number)) {
+            $apiToken = "5ff985e5-7b20-45cb-9044-ba67886de76b"; // Your actual API Key
+            $deviceId = "68cfb7f8b7dd99288d0a3f61"; // Your actual device ID
+            $url = "https://api.textbee.dev/api/v1/gateway/devices/$deviceId/send-sms";
+
+            // Get severity level for more detailed message
+            $severity_text = '';
+            if ($severity !== null) {
+                switch($severity) {
+                    case 'low':
+                        $severity_text = ' (Low Priority)';
+                        break;
+                    case 'medium':
+                        $severity_text = ' (Medium Priority)';
+                        break;
+                    case 'high':
+                        $severity_text = ' (High Priority)';
+                        break;
+                    case 'urgent':
+                        $severity_text = ' (URGENT)';
+                        break;
+                }
+            }
+
+            // Create professional and detailed SMS message
+            $message = "EMEMHS EDUCARE GUIDANCE SYSTEM\n\n";
+            $message .= "Dear $parent_name,\n\n";
+            $message .= "This is to inform you that your child has submitted a new ";
+            $message .= str_replace('_', ' ', ucwords($insertType)) . " concern";
+            $message .= $severity_text . " to our Counseling Office.\n\n";
+            $message .= "Our guidance counselors will review this matter and ";
+            $message .= "contact you within 1-2 business days to discuss next steps.\n\n";
+            $message .= "If this is an urgent matter requiring immediate attention, ";
+            $message .= "please contact the school directly.\n\n";
+            $message .= "Thank you for your attention to your child's wellbeing.\n\n";
+            $message .= "EMEMHS Guidance Department\n";
+            $message .= "Contact: (02) 123-4567";
+
+            $data = [
+                "recipients" => [$contact_number],
+                "message" => $message
+            ];
+            $ch = curl_init($url);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                "x-api-key: $apiToken",
+                "Content-Type: application/json"
+            ]);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_POST, true);
+
+            $response = curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+            if ($response === false || $httpCode >= 400) {
+                echo "❌ Failed to send SMS. HTTP Code: $httpCode<br>";
+                echo "Response: $response";
+            } else {
+                echo "✅ SMS sent!<br>Response: $response";
+            }
+
+            curl_close($ch);
+
+
+            
+        }
+
         
         
     }

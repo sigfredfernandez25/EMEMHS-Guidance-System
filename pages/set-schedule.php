@@ -4,132 +4,105 @@ require_once '../logic/sql_querries.php';
 require_once '../logic/db_connection.php';
 require_once '../logic/notification_logic.php';
 
-// Enable error reporting for debugging
+// Disable error display and set error logging
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+
+// Prevent any output before JSON response
+ob_start();
+
+// Function to send JSON response
+function sendJsonResponse($success, $data = [], $error = null) {
+    ob_clean(); // Clear any previous output
+    header('Content-Type: application/json');
+    header('Cache-Control: no-cache, must-revalidate');
+    echo json_encode([
+        'success' => $success,
+        'data' => $data,
+        'error' => $error
+    ]);
+    exit();
+}
 
 // Check if staff is logged in
-if (!$_SESSION['isLoggedIn']) {
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Unauthorized']);
-    exit();
+if (!isset($_SESSION['isLoggedIn']) || !$_SESSION['isLoggedIn']) {
+    sendJsonResponse(false, [], 'Unauthorized access');
 }
 
-// Get data from either JSON or form data
-$data = [];
-if ($_SERVER['CONTENT_TYPE'] === 'application/json') {
-    $data = json_decode(file_get_contents('php://input'), true);
-} else {
-    $data = $_POST;
-}
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $complaint_id = $_POST['complaint_id'] ?? null;
+    $scheduled_date = $_POST['scheduled_date'] ?? null;
+    $scheduled_time = $_POST['scheduled_time'] ?? null;
 
-$complaint_id = $data['complaint_id'] ?? '';
-$date = $data['date'] ?? '';
-$time = $data['time'] ?? '';
+    error_log("Received schedule request - Complaint ID: $complaint_id, Date: $scheduled_date, Time: $scheduled_time");
 
-// Log received data
-error_log("Received data: " . print_r($data, true));
-
-if (empty($complaint_id) || empty($date) || empty($time)) {
-    header('Content-Type: application/json');
-    echo json_encode(['error' => 'Missing required parameters', 'data' => $data]);
-    exit();
-}
-
-try {
-    // First, check if the complaint exists
-    $checkStmt = $pdo->prepare("SELECT id FROM complaints_concerns WHERE id = :complaint_id");
-    $checkStmt->execute(['complaint_id' => $complaint_id]);
-    $exists = $checkStmt->fetch();
-
-    if (!$exists) {
-        header('Content-Type: application/json');
-        echo json_encode(['error' => 'Complaint not found']);
-        exit();
+    if (!$complaint_id || !$scheduled_date || !$scheduled_time) {
+        error_log("Missing required parameters - Complaint ID: $complaint_id, Date: $scheduled_date, Time: $scheduled_time");
+        sendJsonResponse(false, [], 'Missing required parameters');
     }
 
-    // Convert military time to standard time format
-    $standardTime = date('g:i A', strtotime($time));
-    error_log("Standard time format: " . $standardTime);
+    try {
+        // Check if complaint exists
+        $stmt = $pdo->prepare("SELECT id FROM " . TBL_COMPLAINTS_CONCERNS . " WHERE id = ?");
+        $stmt->execute([$complaint_id]);
+        if (!$stmt->fetch()) {
+            error_log("Complaint not found - ID: $complaint_id");
+            sendJsonResponse(false, [], 'Complaint not found');
+        }
 
-    // Update the complaint with the scheduled date and time
-    $sql = "
-        UPDATE complaints_concerns 
-        SET scheduled_date = :date,
-            scheduled_time = :time,
-            status = 'scheduled',
-            updated_at = NOW()
-        WHERE id = :complaint_id
-    ";
-    
-    error_log("Executing SQL: " . $sql);
-    error_log("With parameters: " . print_r([
-        'date' => $date,
-        'time' => $standardTime,
-        'complaint_id' => $complaint_id
-    ], true));
-
-    $stmt = $pdo->prepare($sql);
-    $result = $stmt->execute([
-        'date' => $date,
-        'time' => $standardTime,
-        'complaint_id' => $complaint_id
-    ]);
-    
-    error_log("Update result: " . ($result ? "success" : "failed"));
-    error_log("Rows affected: " . $stmt->rowCount());
-
-    if ($stmt->rowCount() > 0) {
-        // Verify the update
-        $verifyStmt = $pdo->prepare("SELECT scheduled_date, scheduled_time, status FROM complaints_concerns WHERE id = :complaint_id");
-        $verifyStmt->execute(['complaint_id' => $complaint_id]);
-        $updatedData = $verifyStmt->fetch(PDO::FETCH_ASSOC);
-        
-        error_log("Updated data: " . print_r($updatedData, true));
-        
-        // Get student_id and user_id from the complaint
+        // Update scheduled date and time
         $stmt = $pdo->prepare("
-            SELECT cc.student_id, s.user_id 
-            FROM complaints_concerns cc
+            UPDATE " . TBL_COMPLAINTS_CONCERNS . " 
+            SET scheduled_date = ?, 
+                scheduled_time = ?,
+                status = 'scheduled'
+            WHERE id = ?
+        ");
+        
+        $stmt->execute([$scheduled_date, $scheduled_time, $complaint_id]);
+        error_log("Updated complaint schedule - ID: $complaint_id, Date: $scheduled_date, Time: $scheduled_time");
+
+        // Get student information from the complaint
+        $stmt = $pdo->prepare("
+            SELECT s.id as student_id, s.first_name, s.last_name, u.email 
+            FROM " . TBL_COMPLAINTS_CONCERNS . " cc
             JOIN students s ON cc.student_id = s.id
+            JOIN users u ON s.user_id = u.id
             WHERE cc.id = ?
         ");
         $stmt->execute([$complaint_id]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($result) {
-            error_log("Student data found: " . print_r($result, true));
-            // Create notification for the student using user_id
-            createScheduledNotification($result['user_id'], $complaint_id, $date, $time);
+            error_log("Found student information - ID: {$result['student_id']}, Name: {$result['first_name']} {$result['last_name']}");
+            
+            // Create notification for the student
+            $notificationResult = createScheduledNotification(
+                $result['student_id'], 
+                $complaint_id,
+                $scheduled_date,
+                $scheduled_time
+            );
+            
+            error_log("Notification creation result: " . ($notificationResult ? "success" : "failed"));
+            
+            sendJsonResponse(true, [
+                'student_email' => $result['email'],
+                'student_name' => $result['first_name'] . ' ' . $result['last_name'],
+                'scheduled_date' => $scheduled_date,
+                'scheduled_time' => $scheduled_time
+            ]);
         } else {
-            error_log("No student data found for complaint ID: " . $complaint_id);
+            error_log("Student information not found for complaint ID: $complaint_id");
+            sendJsonResponse(false, [], 'Student information not found');
         }
-
-        // Send success response
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => true,
-            'updated_data' => $updatedData
-        ]);
-    } else {
-        // Send error response if no records were updated
-        header('Content-Type: application/json');
-        echo json_encode([
-            'error' => 'No records updated',
-            'sql' => $sql,
-            'params' => [
-                'date' => $date,
-                'time' => $standardTime,
-                'complaint_id' => $complaint_id
-            ]
-        ]);
+    } catch (Exception $e) {
+        error_log("Error setting schedule: " . $e->getMessage());
+        error_log("Stack trace: " . $e->getTraceAsString());
+        sendJsonResponse(false, [], 'Database error occurred');
     }
-} catch (PDOException $e) {
-    error_log("Database error: " . $e->getMessage());
-    header('Content-Type: application/json');
-    echo json_encode([
-        'error' => 'Database error',
-        'message' => $e->getMessage()
-    ]);
 }
+
+sendJsonResponse(false, [], 'Invalid request method');
 ?>

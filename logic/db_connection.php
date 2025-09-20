@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost";
 $dbUsername = "root";
-$dbPassword = "1234";
+$dbPassword = "";
 $dbname = "guidancesystem";
 
 // mysqli connection
