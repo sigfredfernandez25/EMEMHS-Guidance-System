@@ -25,7 +25,7 @@ foreach ($complaints as $complaint) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Dashboard - Guidance Portal</title>
+    <title>Manage Complaints - Guidance Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -365,10 +365,7 @@ foreach ($complaints as $complaint) {
                         <i class="fas fa-list"></i>
                         All Complaints
                     </button>
-                    <button class="tab-button" data-tab="scheduled">
-                        <i class="fas fa-calendar-check"></i>
-                        Scheduled Complaints
-                    </button>
+
                 </div>
 
                 <!-- Pending Complaints Tab -->
@@ -593,92 +590,7 @@ foreach ($complaints as $complaint) {
                     </div>
                 </div>
 
-                <!-- Scheduled Complaints Tab -->
-                <div id="scheduled" class="tab-content">
-                    <div class="flex items-center mb-6">
-                        <div class="bg-[#800000]/10 text-[#800000] rounded-full p-3 mr-4">
-                            <i class="fas fa-calendar-check text-xl"></i>
-                        </div>
-                        <h2 class="section-title text-xl font-semibold text-[#800000]">Scheduled Complaints</h2>
-                        <div class="ml-auto">
-                            <input type="text" placeholder="Search scheduled complaints..." class="search-input" />
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="table-header">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade&&Section</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Complaint Type</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Time</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evidence</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <?php 
-                                    $scheduled_found = false;
-                                    if (!empty($complaints)):
-                                        foreach ($complaints as $complaint):
-                                            if ($complaint['status'] == 'scheduled'):
-                                                $scheduled_found = true;
-                                    ?>
-                                        <tr class="table-row">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['first_name']." ".$complaint['last_name']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['grade_level']." ".$complaint['section']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['type']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['scheduled_date']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['scheduled_time']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <?php if (!empty($complaint['evidence']) && !empty($complaint['mime_type'])): ?>
-                                                    <img src="data:<?php echo $complaint['mime_type']; ?>;base64,<?php echo base64_encode($complaint['evidence']); ?>" 
-                                                         alt="Evidence" 
-                                                         class="w-16 h-16 object-cover rounded-lg shadow-sm hover:scale-110 transition-transform" />
-                                                <?php else: ?>
-                                                    <span class="text-sm text-gray-500">No Image</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                <form action="mark_resolved.php" method="POST" class="inline">
-                                                    <input type="hidden" name="complaint_id" value="<?= $complaint['id'] ?>">
-                                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm">
-                                                        Mark as Resolved
-                                                    </button>
-                                                </form>
-                                                <button class="view-complaint bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm ml-2"
-                                                        data-complaint='<?php 
-                                                            $complaintData = $complaint;
-                                                            // Remove binary data from the JSON
-                                                            unset($complaintData['evidence']);
-                                                            unset($complaintData['mime_type']);
-                                                            echo json_encode($complaintData); 
-                                                        ?>'
-                                                        data-evidence='<?php echo !empty($complaint['evidence']) ? base64_encode($complaint['evidence']) : ''; ?>'
-                                                        data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'>
-                                                    View
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    <?php 
-                                            endif;
-                                        endforeach;
-                                    endif;
-                                    if (!$scheduled_found):
-                                    ?>
-                                        <tr>
-                                            <td colspan="7" class="px-6 py-4 text-center text-sm text-gray-500">
-                                                No scheduled complaints found
-                                            </td>
-                                        </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
     </main>
@@ -1126,7 +1038,7 @@ EMEMHS Guidance Office`;
                         if (!noResultsRow) {
                             const newRow = document.createElement('tr');
                             const cell = document.createElement('td');
-                            cell.colSpan = tabId === 'scheduled' ? 7 : 8;
+                            cell.colSpan = 8;
                             cell.className = 'px-6 py-4 text-center text-sm text-gray-500';
                             cell.textContent = 'No matching complaints found';
                             newRow.appendChild(cell);

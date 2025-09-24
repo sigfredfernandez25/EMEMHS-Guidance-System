@@ -15,6 +15,13 @@
             position: relative;
             overflow-x: hidden;
         }
+        .landing{
+            background: url('image/landing-copy2.jpg');
+            background-size: cover;
+            background-position: center ;
+            background-repeat: no-repeat;
+            height: 90vh;
+        }
         .accent-primary { color: #800000; }
         .bg-primary { background: #800000; }
         .bg-primary-light { background: #f8eaea; }
@@ -84,7 +91,7 @@
         }
         .section-subtitle {
             font-size: 1.05rem;
-            color: #64748b;
+            color:rgb(13, 30, 54);
             font-weight: 500;
             line-height: 1.6;
         }
@@ -181,34 +188,6 @@
         @media (min-width: 768px) {
             .section-title { font-size: 3rem; }
             .section-subtitle { font-size: 1.05rem; }
-        }
-        /* Background Elements */
-        .bg-pattern {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            opacity: 0.3;
-            background: 
-                linear-gradient(45deg, rgba(128, 0, 0, 0.02) 25%, transparent 25%),
-                linear-gradient(-45deg, rgba(128, 0, 0, 0.02) 25%, transparent 25%),
-                linear-gradient(45deg, transparent 75%, rgba(128, 0, 0, 0.02) 75%),
-                linear-gradient(-45deg, transparent 75%, rgba(128, 0, 0, 0.02) 75%);
-            background-size: 20px 20px;
-            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-        }
-
-        .floating-shapes {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            pointer-events: none;
-            opacity: 0.4;
         }
 
         .shape {
@@ -326,14 +305,6 @@
     </style>
 </head>
 <body class="min-h-screen relative overflow-x-hidden">
-    <!-- Background Elements -->
-    <div class="bg-pattern"></div>
-    <div class="floating-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-    </div>
-    <div class="gradient-overlay"></div>
 
     <!-- Navigation -->
     <nav class="bg-white shadow-lg sticky top-0 z-50">
@@ -364,19 +335,19 @@
     </nav>
 
     <!-- Hero Section -->
-    <section class="w-full py-24 px-4 relative z-10 hero-pattern" id="up">
+    <section class="landing w-full py-24 px-4 relative z-10 hero-pattern" id="up">
         <div class="max-w-6xl mx-auto">
             <div class="flex justify-center text-center items-center">
                 <div class="container">
                     <div class="animate__animated animate__fadeIn">
-                        <h1 class="section-title mb-6">
+                        <h1 class="section-title top mb-8 lg:mt-8 sm:mb-6">
                             Boost Your School Life with <span class="accent-primary">Guidance Management</span>
                         </h1>
                         <p class="section-subtitle mb-8">
-                            Take charge of your academic journey and well-being with ease. Organize counseling sessions, address concerns, and stay connected—all in one place.
+                            Take charge of your academic journey and well-being with ease.<br> Organize counseling sessions, address concerns, and stay connected—all in one place.
                         </p>
                         <div class="flex justify-center text-center items-center  gap-4">
-                            <a href="pages/login.php" class="btn-primary px-8 py-3 rounded-xl font-semibold text-base">Get Started Today</a>
+                            <a href="pages/login.php" class="btn-primary px-8 py-3 rounded-xl font-semibold text-base border-2 border-[#800000]">Get Started</a>
                             <a href="#features" class="px-8 py-3 rounded-xl font-semibold text-base border-2 border-[#800000] text-[#800000] hover:bg-[#800000] hover:text-white transition-all duration-300">Learn More</a>
                         </div>
                     </div>
@@ -416,33 +387,59 @@
                 <h2 class="section-title mb-4">Core Features Designed for You</h2>
                 <p class="section-subtitle max-w-2xl mx-auto">Everything you need to succeed in your academic journey</p>
             </div>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="feature-card p-8">
-                    <div class="icon-wrapper mb-6">
-                        <svg class="w-6 h-6 text-[#800000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                    </div>
-                    <h3 class="feature-title">Seamless Scheduling</h3>
-                    <p class="feature-desc">Effortlessly book sessions with guidance counselors at a time that works for you.</p>
+            <div class="flex flex-col lg:flex-row gap-8 items-start">
+                <!-- Feature Image (Hidden on mobile, shown on lg screens and up) -->
+                <div class="w-full lg:w-1/2 hidden lg:block transform hover:scale-[1.02] transition-transform duration-500">
+                    <img src="image/landing2.svg" alt="Student using guidance system" class="w-full h-auto max-w-lg mx-auto mb-2">
+                    <img src="image/landing3.jpeg" alt="Student using guidance system" class="w-full h-auto max-w-lg mx-auto">
                 </div>
-                <div class="feature-card p-8">
-                    <div class="icon-wrapper mb-6">
-                        <svg class="w-6 h-6 text-[#800000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-                        </svg>
+
+                <!-- Features Grid -->
+                <div class="w-full lg:w-1/2 space-y-6">
+                    <!-- Feature 1 -->
+                    <div class="feature-card group p-6 rounded-xl bg-white  hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#800000]/20">
+                        <div class="flex items-start">
+                            <div class="icon-wrapper p-3 mr-4 rounded-full bg-[#800000]/10 group-hover:bg-[#800000] transition-colors duration-300">
+                                <svg class="w-6 h-6 text-[#800000] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">Seamless Scheduling</h3>
+                                <p class="text-gray-600 text-sm leading-relaxed">Effortlessly book sessions with guidance counselors at a time that works perfectly for your schedule, all with just a few taps.</p>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="feature-title">Instant Notifications</h3>
-                    <p class="feature-desc">Receive updates about your appointments and other important events directly through SMS or email.</p>
-                </div>
-                <div class="feature-card p-8">
-                    <div class="icon-wrapper mb-6">
-                        <svg class="w-6 h-6 text-[#800000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
+
+                    <!-- Feature 2 -->
+                    <div class="feature-card group p-6 rounded-xl bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#800000]/20">
+                        <div class="flex items-start">
+                            <div class="icon-wrapper p-3 mr-4 rounded-full bg-[#800000]/10 group-hover:bg-[#800000] transition-colors duration-300">
+                                <svg class="w-6 h-6 text-[#800000] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">Instant Notifications</h3>
+                                <p class="text-gray-600 text-sm leading-relaxed">Stay updated in real-time with instant alerts about your appointments, counselor responses, and important announcements.</p>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="feature-title">Secure Complaints Submission</h3>
-                    <p class="feature-desc">Report concerns privately and confidently, knowing they'll be addressed by the right people.</p>
+
+                    <!-- Feature 3 -->
+                    <div class="feature-card group p-6 rounded-xl bg-white hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#800000]/20">
+                        <div class="flex items-start">
+                            <div class="icon-wrapper p-3 mr-4 rounded-full bg-[#800000]/10 group-hover:bg-[#800000] transition-colors duration-300">
+                                <svg class="w-6 h-6 text-[#800000] group-hover:text-white transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">Secure Communication</h3>
+                                <p class="text-gray-600 text-sm leading-relaxed">Share concerns and communicate with counselors through our encrypted platform, ensuring your privacy and confidentiality.</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -561,7 +558,7 @@
                 </div>
             </div>
             <div class="border-t mt-12 pt-8 text-center">
-                <p class="text-sm text-gray-600">© 2024 EMEMHS Guidance System. All rights reserved.</p>
+                <p class="text-sm text-gray-600">© 2025 EMEMHS Guidance System. All rights reserved.</p>
             </div>
         </div>
     </footer>

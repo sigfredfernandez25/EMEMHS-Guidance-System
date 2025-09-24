@@ -2,7 +2,8 @@
 require_once 'db_connection.php';
 require_once 'sql_querries.php';
 
-function createNotification($student_id, $reference_id, $reference_type, $type, $message) {
+function createNotification($student_id, $reference_id, $reference_type, $type, $message)
+{
     global $pdo;
 
     error_log("[DEBUG] createNotification() called with parameters:");
@@ -58,9 +59,10 @@ function createNotification($student_id, $reference_id, $reference_type, $type, 
     }
 }
 
-function getStudentNotifications($student_id) {
+function getStudentNotifications($student_id)
+{
     global $pdo;
-    
+
     try {
         $stmt = $pdo->prepare(SQL_GET_STUDENT_NOTIFICATIONS);
         $stmt->execute([$student_id]);
@@ -72,9 +74,10 @@ function getStudentNotifications($student_id) {
 }
 
 
-function getUnreadNotificationsCount($student_id) {
+function getUnreadNotificationsCount($student_id)
+{
     global $pdo;
-    
+
     try {
         $stmt = $pdo->prepare(SQL_GET_UNREAD_NOTIFICATIONS_COUNT);
         $stmt->execute([$student_id]);
@@ -86,9 +89,10 @@ function getUnreadNotificationsCount($student_id) {
     }
 }
 
-function markNotificationAsRead($notification_id, $student_id) {
+function markNotificationAsRead($notification_id, $student_id)
+{
     global $pdo;
-    
+
     try {
         $stmt = $pdo->prepare(SQL_MARK_NOTIFICATION_AS_READ);
         return $stmt->execute([$notification_id, $student_id]);
@@ -98,9 +102,10 @@ function markNotificationAsRead($notification_id, $student_id) {
     }
 }
 
-function markAllNotificationsAsRead($student_id) {
+function markAllNotificationsAsRead($student_id)
+{
     global $pdo;
-    
+
     try {
         $stmt = $pdo->prepare(SQL_MARK_ALL_NOTIFICATIONS_AS_READ);
         return $stmt->execute([$student_id]);
@@ -111,35 +116,73 @@ function markAllNotificationsAsRead($student_id) {
 }
 
 // Function to create notification when complaint is scheduled
-function createScheduledNotification($student_id, $complaint_id, $scheduled_date, $scheduled_time) {
+function createScheduledNotification($student_id, $complaint_id, $scheduled_date, $scheduled_time)
+{
+    global $pdo;
+    
     error_log("Creating scheduled notification with parameters:");
     error_log("Student ID: " . $student_id);
     error_log("Complaint ID: " . $complaint_id);
     error_log("Scheduled Date: " . $scheduled_date);
     error_log("Scheduled Time: " . $scheduled_time);
 
-    $message = "Your complaint has been scheduled for " . date('F j, Y', strtotime($scheduled_date)) . 
-               " at " . date('g:i A', strtotime($scheduled_time));
-    
-    error_log("Generated message: " . $message);
-    
-    $result = createNotification($student_id, $complaint_id, 'complaint', 'scheduled', $message);
-    
-    error_log("Notification creation result: " . ($result ? "success" : "failed"));
-    
-    return $result;
+    try {
+        // Get the user_id from students table
+        $stmt = $pdo->prepare("SELECT user_id FROM " . TBL_STUDENTS . " WHERE id = ?");
+        $stmt->execute([$student_id]);
+        $student = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$student || !$student['user_id']) {
+            error_log("[ERROR] Student not found or has no user_id for student_id: " . $student_id);
+            return false;
+        }
+
+        $message = "Your complaint has been scheduled for " . date('F j, Y', strtotime($scheduled_date)) .
+            " at " . date('g:i A', strtotime($scheduled_time));
+
+        error_log("Generated message: " . $message);
+
+        $result = createNotification($student['user_id'], $complaint_id, 'complaint', 'scheduled', $message);
+
+        error_log("Notification creation result: " . ($result ? "success" : "failed"));
+
+        return $result;
+    } catch (PDOException $e) {
+        error_log("[ERROR] Database error in createScheduledNotification: " . $e->getMessage());
+        return false;
+    }
 }
 
 // Function to create notification when complaint is resolved
-function createResolvedNotification($student_id, $complaint_id) {
+function createResolvedNotification($student_id, $complaint_id)
+{
     $message = "Your complaint has been marked as resolved.";
     return createNotification($student_id, $complaint_id, 'complaint', 'resolved', $message);
 }
 
+// Function to create notification when reschedule is requested
+function createRescheduleRequestNotification($admin_id, $complaint_id, $student_name)
+{
+    $message = "Reschedule request from $student_name for complaint ID: $complaint_id";
+    return createNotification($admin_id, $complaint_id, 'complaint', 'reschedule_request', $message);
+}
+
+// Function to create notification when reschedule is approved/rejected
+function createRescheduleResponseNotification($student_id, $complaint_id, $status, $reason = '')
+{
+    if ($status === 'approved') {
+        $message = "Your reschedule request has been approved.";
+    } else {
+        $message = "Your reschedule request has been rejected. Reason: " . $reason;
+    }
+    return createNotification($student_id, $complaint_id, 'complaint', 'reschedule_' . $status, $message);
+}
+
 // Function to create notification when lost item is found
-function createFoundItemNotification($student_id, $item_id, $item_name) {
+function createFoundItemNotification($student_id, $item_id, $item_name)
+{
     global $pdo;
-    
+
     error_log("[DEBUG] createFoundItemNotification() called with parameters:");
     error_log("Student ID: " . $student_id);
     error_log("Item ID: " . $item_id);
@@ -152,20 +195,20 @@ function createFoundItemNotification($student_id, $item_id, $item_name) {
 
     try {
         // Get the user_id from students table
-        $stmt = $pdo->prepare("SELECT user_id FROM students WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT user_id, first_name, last_name FROM " . TBL_STUDENTS . " WHERE id = ?");
         $stmt->execute([$student_id]);
         $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$student || !$student['user_id']) {
-            error_log("[ERROR] Student not found or has no user_id");
+            error_log("[ERROR] Student not found or has no user_id for student_id: " . $student_id);
             return false;
         }
 
-        $message = "A matching item has been found: " . $item_name;
+        $message = "A matching item has been found: " . htmlspecialchars($item_name);
         $result = createNotification($student['user_id'], $item_id, 'lost_item', 'found_item', $message);
-        
+
         error_log("Notification creation result: " . ($result ? "success" : "failed"));
-        
+
         return $result;
     } catch (PDOException $e) {
         error_log("[ERROR] Database error in createFoundItemNotification: " . $e->getMessage());
@@ -174,26 +217,31 @@ function createFoundItemNotification($student_id, $item_id, $item_name) {
     }
 }
 
-function createAdminNotif($item_id, $student_name, $action) {
+function createAdminNotif($item_id, $student_name, $action)
+{
     global $pdo;
 
     try {
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
+        $stmt = $pdo->prepare("SELECT id FROM " . TBL_USERS . " WHERE role = 'admin'");
         $stmt->execute();
-        $admin = $stmt->fetch(PDO::FETCH_ASSOC);
+        $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        if (!$admin) {
+        if (empty($admins)) {
             error_log("[ERROR] No admin found for notification");
             return false;
         }
 
-        $adminId = $admin['id'];
-        $message = $student_name . " " . $action;
+        $student_name = $student_name ?? 'Unknown Student';
+        $action = $action ?? 'performed an action';
+        $message = htmlspecialchars($student_name . " " . $action);
 
-        $success = createNotification($adminId, $item_id, 'lost_item', 'item_claimed', $message);
-
-        if (!$success) {
-            error_log("[ERROR] createNotification failed for admin notification");
+        $success = true;
+        foreach ($admins as $admin) {
+            $result = createNotification($admin['id'], $item_id, 'lost_item', 'item_claimed', $message);
+            if (!$result) {
+                error_log("[ERROR] createNotification failed for admin ID: " . $admin['id']);
+                $success = false;
+            }
         }
 
         return $success;
@@ -203,15 +251,16 @@ function createAdminNotif($item_id, $student_name, $action) {
     }
 }
 
-function notifyAdminNewComplaint($complaint_id, $student_name, $complaint_type) {
+function notifyAdminNewComplaint($complaint_id, $student_name, $complaint_type)
+{
     global $pdo;
-    
+
     try {
         // Get all admin users
         $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
         $stmt->execute();
         $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Create notification for each admin
         foreach ($admins as $admin) {
             $stmt = $pdo->prepare(SQL_INSERT_NOTIFICATION);
@@ -225,7 +274,7 @@ function notifyAdminNewComplaint($complaint_id, $student_name, $complaint_type) 
                 date('H:i:s')
             ]);
         }
-        
+
         return true;
     } catch (PDOException $e) {
         error_log("Error creating admin notification: " . $e->getMessage());
@@ -233,24 +282,32 @@ function notifyAdminNewComplaint($complaint_id, $student_name, $complaint_type) 
     }
 }
 
-function getAdminNotifications($admin_id) {
+function getAdminNotifications($admin_id)
+{
     global $pdo;
-    
+
     try {
         $stmt = $pdo->prepare("
             SELECT n.*, 
                 CASE 
                     WHEN n.reference_type = 'complaint' THEN cc.type
-                    WHEN n.reference_type = 'lost_item' THEN li.category
+                    WHEN n.reference_type = 'lost_item' THEN COALESCE(li.category, 'general')
+                    ELSE 'general'
                 END as reference_type_detail,
                 CASE 
-                    WHEN n.reference_type = 'complaint' THEN cc.status
-                    WHEN n.reference_type = 'lost_item' THEN li.status
+                    WHEN n.reference_type = 'complaint' THEN COALESCE(cc.status, 'pending')
+                    WHEN n.reference_type = 'lost_item' THEN COALESCE(li.status, 'pending')
+                    ELSE 'pending'
                 END as reference_status,
                 CASE 
                     WHEN n.reference_type = 'complaint' THEN cc.description
                     WHEN n.reference_type = 'lost_item' THEN li.description
+                    ELSE NULL
                 END as description,
+                CASE 
+                    WHEN n.reference_type = 'complaint' THEN COALESCE(cc.severity, 'medium')
+                    ELSE NULL
+                END as severity,
                 CASE 
                     WHEN n.reference_type = 'lost_item' THEN li.item_name
                     ELSE NULL
@@ -269,14 +326,15 @@ function getAdminNotifications($admin_id) {
                     WHEN n.reference_type = 'lost_item' THEN li.mime_type
                     ELSE NULL
                 END as mime_type,
-                s.first_name,
-                s.last_name,
+                COALESCE(s.first_name, 'Unknown') as first_name,
+                COALESCE(s.last_name, 'User') as last_name,
                 s.grade_level,
                 s.section
             FROM " . TBL_NOTIFICATIONS . " n
             LEFT JOIN " . TBL_COMPLAINTS_CONCERNS . " cc ON n.reference_id = cc.id AND n.reference_type = 'complaint'
             LEFT JOIN " . TBL_LOST_ITEMS . " li ON n.reference_id = li.id AND n.reference_type = 'lost_item'
-            LEFT JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id OR li.student_id = s.id
+            LEFT JOIN " . TBL_STUDENTS . " s ON (cc.student_id = s.id AND n.reference_type = 'complaint') 
+                                            OR (li.student_id = s.id AND n.reference_type = 'lost_item')
             WHERE n.user_id = ?
             ORDER BY n.date_created DESC, n.time_created DESC
         ");
@@ -288,9 +346,10 @@ function getAdminNotifications($admin_id) {
     }
 }
 
-function getAdminUnreadNotificationsCount($admin_id) {
+function getAdminUnreadNotificationsCount($admin_id)
+{
     global $pdo;
-    
+
     try {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as unread_count
@@ -306,9 +365,10 @@ function getAdminUnreadNotificationsCount($admin_id) {
     }
 }
 
-function markAllAdminNotificationsAsRead($admin_id) {
+function markAllAdminNotificationsAsRead($admin_id)
+{
     global $pdo;
-    
+
     try {
         $stmt = $pdo->prepare("
             UPDATE " . TBL_NOTIFICATIONS . "

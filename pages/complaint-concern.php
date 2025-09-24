@@ -2,7 +2,7 @@
 require_once '../logic/sql_querries.php';
 require_once '../logic/db_connection.php';
 session_start();
-if (!isset($_SESSION['isLoggedIn'])){
+if (!isset($_SESSION['isLoggedIn'])) {
     echo "<script>alert('You are not logged in!!'); window.location.href = 'index.php';</script>";
 }
 $student_id = $_SESSION['student_id'];
@@ -73,6 +73,16 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background-color: #dcfce7;
             color: #166534;
         }
+
+        .btn-delete {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-delete:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+        }
     </style>
 </head>
 
@@ -130,20 +140,48 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <?php if (!empty($complaint['evidence']) && !empty($complaint['mime_type'])): ?>
-                                            <img src="data:<?php echo $complaint['mime_type']; ?>;base64,<?php echo base64_encode($complaint['evidence']); ?>" 
-                                                 alt="Evidence" 
-                                                 class="w-16 h-16 object-cover rounded-lg shadow-sm" />
+                                            <img src="data:<?php echo $complaint['mime_type']; ?>;base64,<?php echo base64_encode($complaint['evidence']); ?>"
+                                                alt="Evidence"
+                                                class="w-16 h-16 object-cover rounded-lg shadow-sm" />
                                         <?php else: ?>
                                             <span class="text-sm text-gray-500">No Image</span>
                                         <?php endif; ?>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                        <form action="complaint-concern-form.php" method="POST" class="inline">
-                                            <input type="hidden" name="user" value="<?= $complaint['id'] ?>">
-                                            <button type="submit" class="btn-secondary text-white px-4 py-2 rounded-lg text-sm">
-                                                Edit
-                                            </button>
-                                        </form>
+                                        <div class="flex space-x-2">
+                                            <?php if ($complaint['status'] === 'pending'): ?>
+                                                <!-- Edit Button - Only for pending complaints -->
+                                                <form action="complaint-concern-form.php" method="POST" class="inline">
+                                                    <input type="hidden" name="user" value="<?= $complaint['id'] ?>">
+                                                    <button type="submit" class="btn-secondary text-white px-4 py-2 rounded-lg text-sm">
+                                                        Edit
+                                                    </button>
+                                                </form>
+
+                                                <!-- Delete Button - Only for pending complaints -->
+                                                <form action="../logic/delete_complaint_logic.php" method="POST" class="inline"
+                                                    onsubmit="return confirm('Are you sure you want to delete this complaint? This action cannot be undone.')">
+                                                    <input type="hidden" name="complaint_id" value="<?= $complaint['id'] ?>">
+                                                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                                                        Delete
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <!-- Disabled Edit Button for non-pending complaints -->
+                                                <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm cursor-not-allowed">
+                                                    Edit
+                                                </button>
+                                                <span class="text-xs text-gray-500 mt-1">
+                                                    <?php
+                                                    if ($complaint['status'] === 'scheduled') {
+                                                        echo 'Cannot edit scheduled complaints';
+                                                    } elseif ($complaint['status'] === 'resolved') {
+                                                        echo 'Cannot edit resolved complaints';
+                                                    }
+                                                    ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

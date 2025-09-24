@@ -130,10 +130,16 @@ error_log("Session data: " . print_r($_SESSION, true));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Profile - EMEMHS</title>
+    <title>My Profile - EMEMHS Guidance</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        /* Mobile-first modal design */
         .modal {
             display: none;
             position: fixed;
@@ -141,20 +147,24 @@ error_log("Session data: " . print_r($_SESSION, true));
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.6);
             z-index: 50;
+            backdrop-filter: blur(4px);
         }
 
         .modal.active {
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 1rem;
         }
 
         .modal-content {
-            transform: translateY(-20px);
+            transform: translateY(20px);
             opacity: 0;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .modal.active .modal-content {
@@ -162,247 +172,472 @@ error_log("Session data: " . print_r($_SESSION, true));
             opacity: 1;
         }
 
+        /* Mobile-optimized form inputs */
         .form-input {
-            @apply w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-[#800000] outline-none transition-colors;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+            background-color: #ffffff;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #800000;
+            box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
         }
 
         .form-label {
-            @apply block text-sm font-medium text-gray-700 mb-1;
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Profile card design */
+        .profile-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+        }
+
+        /* Stats card design */
+        .stats-card {
+            background: linear-gradient(135deg, #800000 0%, #600000 100%);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+        }
+
+        /* Touch-friendly buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #800000 0%, #600000 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        @media (min-width: 768px) {
+            .btn-primary:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(128, 0, 0, 0.2);
+            }
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #800000;
+            border: 2px solid #800000;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        @media (min-width: 768px) {
+            .btn-secondary:hover {
+                background: #800000;
+                color: white;
+                transform: translateY(-1px);
+            }
+        }
+
+        /* Mobile spacing */
+        .mobile-section {
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 768px) {
+            .mobile-section {
+                margin-bottom: 2rem;
+            }
+        }
+
+        /* Progress bars */
+        .progress-bar {
+            height: 0.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 0.25rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            border-radius: 0.25rem;
+            transition: width 0.3s ease;
         }
     </style>
 </head>
 <body class="bg-gray-50 font-[Inter]">
     <?php include 'navigation.php'; ?>
 
-    <main class="max-w-4xl mx-auto px-4 py-8">
+    <main class="px-4 py-4 sm:py-6 lg:px-8 max-w-6xl mx-auto">
+        <!-- Mobile-First Notifications -->
         <?php if (isset($_GET['success'])): ?>
-            <div class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg">
-                Profile updated successfully!
+            <div class="mb-4 p-4 bg-green-50 border-l-4 border-green-400 text-green-800 rounded-r-lg">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Profile updated successfully! ✅
+                </div>
             </div>
         <?php endif; ?>
 
         <?php if (isset($error)): ?>
-            <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                <?php echo $error; ?>
+            <div class="mb-4 p-4 bg-red-50 border-l-4 border-red-400 text-red-800 rounded-r-lg">
+                <div class="flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <?php echo $error; ?>
+                </div>
             </div>
         <?php endif; ?>
 
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-800">Student Profile</h1>
-            <p class="text-gray-600 mt-2">View and manage your personal information</p>
+        <!-- Mobile-First Header -->
+        <div class="mobile-section">
+            <div class="text-center sm:text-left">
+                <h1 class="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                    My Profile
+                </h1>
+                <p class="text-sm sm:text-base text-gray-600">
+                    View and manage your personal information
+                </p>
+            </div>
         </div>
 
         <?php if (!empty($studentDetails)) {
             $student = $studentDetails[0];
         ?>
-            <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <!-- Mobile-First Profile Card -->
+            <div class="profile-card mobile-section">
                 <!-- Profile Header -->
-                <div class="bg-[#800000] px-8 py-6 text-white">
-                    <div class="flex items-center space-x-6">
-                        <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2 class="text-2xl font-bold"><?= htmlspecialchars($student['first_name']) . ' ' . htmlspecialchars($student['last_name']) ?></h2>
-                            <p class="text-gray-200 mt-1"><?= htmlspecialchars($student['email']) ?></p>
+                <div class="bg-gradient-to-r from-[#800000] to-[#600000] px-4 sm:px-6 lg:px-8 py-6 text-white relative overflow-hidden">
+                    <!-- Background decoration -->
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full transform translate-x-16 -translate-y-16"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full transform -translate-x-12 translate-y-12"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+                            <!-- Avatar -->
+                            <div class="w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="h-12 w-12 sm:h-16 sm:w-16 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                </svg>
+                            </div>
+                            
+                            <!-- User Info -->
+                            <div class="text-center sm:text-left flex-1">
+                                <h2 class="text-xl sm:text-2xl font-bold mb-1">
+                                    <?= htmlspecialchars($student['first_name']) . ' ' . htmlspecialchars($student['last_name']) ?>
+                                </h2>
+                                <p class="text-white/80 text-sm sm:text-base mb-2">
+                                    <?= htmlspecialchars($student['email']) ?>
+                                </p>
+                                <div class="flex flex-col sm:flex-row items-center sm:items-start space-y-1 sm:space-y-0 sm:space-x-4 text-sm text-white/70">
+                                    <span>Grade <?= htmlspecialchars($student['grade_level']) ?></span>
+                                    <span class="hidden sm:inline">•</span>
+                                    <span>Section <?= htmlspecialchars($student['section']) ?></span>
+                                </div>
+                            </div>
+                            
+                            <!-- Edit Button (Mobile) -->
+                            <button onclick="openEditModal()" class="sm:hidden btn-secondary bg-white/20 border-white/30 text-white hover:bg-white/30">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                                Edit
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Profile Details -->
-                <div class="p-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="p-4 sm:p-6 lg:p-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <!-- Personal Information -->
-                        <div class="space-y-6">
-                            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                                <div class="p-2 bg-[#800000]/10 rounded-lg mr-3">
+                                    <svg class="h-5 w-5 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                                    </svg>
+                                </div>
                                 Personal Information
                             </h3>
+                            
                             <div class="space-y-4">
-                                <div class="flex items-center">
-                                    <span class="w-32 text-gray-600">First Name:</span>
-                                    <span class="font-medium"><?= htmlspecialchars($student['first_name']) ?></span>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">First Name</label>
+                                    <p class="text-base font-semibold text-gray-900 mt-1"><?= htmlspecialchars($student['first_name']) ?></p>
                                 </div>
-                                <div class="flex items-center">
-                                    <span class="w-32 text-gray-600">Middle Name:</span>
-                                    <span class="font-medium"><?= htmlspecialchars($student['middle_name']) ?></span>
+                                
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Middle Name</label>
+                                    <p class="text-base font-semibold text-gray-900 mt-1"><?= htmlspecialchars($student['middle_name'] ?: 'Not specified') ?></p>
                                 </div>
-                                <div class="flex items-center">
-                                    <span class="w-32 text-gray-600">Last Name:</span>
-                                    <span class="font-medium"><?= htmlspecialchars($student['last_name']) ?></span>
+                                
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Last Name</label>
+                                    <p class="text-base font-semibold text-gray-900 mt-1"><?= htmlspecialchars($student['last_name']) ?></p>
+                                </div>
+                                
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Email Address</label>
+                                    <p class="text-base font-semibold text-gray-900 mt-1"><?= htmlspecialchars($student['email']) ?></p>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Academic Information -->
-                        <div class="space-y-6">
-                            <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path d="M12 14l9-5-9-5-9 5 9 5z" />
-                                    <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
-                                </svg>
+                        <div class="space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-4">
+                                <div class="p-2 bg-[#800000]/10 rounded-lg mr-3">
+                                    <svg class="h-5 w-5 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                    </svg>
+                                </div>
                                 Academic Information
                             </h3>
+                            
                             <div class="space-y-4">
-                                <div class="flex items-center">
-                                    <span class="w-32 text-gray-600">Grade Level:</span>
-                                    <span class="font-medium"><?= htmlspecialchars($student['grade_level']) ?></span>
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Grade Level</label>
+                                    <p class="text-base font-semibold text-gray-900 mt-1">Grade <?= htmlspecialchars($student['grade_level']) ?></p>
                                 </div>
-                                <div class="flex items-center">
-                                    <span class="w-32 text-gray-600">Section:</span>
-                                    <span class="font-medium"><?= htmlspecialchars($student['section']) ?></span>
+                                
+                                <div class="bg-gray-50 p-4 rounded-lg">
+                                    <label class="text-xs font-medium text-gray-500 uppercase tracking-wide">Section</label>
+                                    <p class="text-base font-semibold text-gray-900 mt-1">Section <?= htmlspecialchars($student['section']) ?></p>
+                                </div>
+                                
+                                <!-- Quick Actions (Desktop) -->
+                                <div class="hidden sm:block pt-4">
+                                    <button onclick="openEditModal()" class="btn-secondary w-full">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                        Edit Profile
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Complaint Statistics Section -->
-                    <div class="mt-8 pt-6 border-t border-gray-200">
-                        <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-4">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <!-- Mobile Action Button -->
+                    <div class="sm:hidden mt-6 pt-6 border-t border-gray-200">
+                        <button onclick="openEditModal()" class="btn-secondary w-full">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
-                            Complaint Statistics
-                        </h3>
-
-                        <?php if ($totalComplaints > 0): ?>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <!-- Total Complaints -->
-                                <div class="bg-blue-50 p-4 rounded-lg">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-sm text-blue-600 font-medium">Total Complaints</p>
-                                            <p class="text-2xl font-bold text-blue-900"><?= $totalComplaints ?></p>
-                                        </div>
-                                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Most Common Complaint -->
-                                <div class="bg-green-50 p-4 rounded-lg">
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <p class="text-sm text-green-600 font-medium">Most Common Type</p>
-                                            <p class="text-lg font-bold text-green-900">
-                                                <?= $mostCommonComplaint ? htmlspecialchars(ucfirst($mostCommonComplaint['type'])) : 'None' ?>
-                                            </p>
-                                            <?php if ($mostCommonComplaint): ?>
-                                                <p class="text-sm text-green-600">
-                                                    (<?= $mostCommonComplaint['count'] ?> times)
-                                                </p>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                                            </svg>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Complaint Type Breakdown -->
-                            <?php if (!empty($complaintStats)): ?>
-                                <div class="mt-6">
-                                    <h4 class="text-md font-semibold text-gray-800 mb-3">Complaint Types Breakdown</h4>
-                                    <div class="space-y-2">
-                                        <?php foreach ($complaintStats as $stat): ?>
-                                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                                <span class="font-medium text-gray-800">
-                                                    <?= htmlspecialchars(ucfirst($stat['type'])) ?>
-                                                </span>
-                                                <div class="flex items-center space-x-2">
-                                                    <div class="w-24 bg-gray-200 rounded-full h-2">
-                                                        <div class="bg-[#800000] h-2 rounded-full"
-                                                             style="width: <?= ($stat['type_count'] / $totalComplaints) * 100 ?>%">
-                                                        </div>
-                                                    </div>
-                                                    <span class="text-sm text-gray-600 w-12 text-right">
-                                                        <?= $stat['type_count'] ?>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        <?php endforeach; ?>
-                                    </div>
-                                </div>
-                            <?php endif; ?>
-                        <?php else: ?>
-                            <div class="bg-gray-50 p-6 rounded-lg text-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
-                                <p class="text-gray-600">No complaints submitted yet</p>
-                                <p class="text-sm text-gray-500 mt-1">Your complaint history will appear here</p>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-
-                    <!-- Action Buttons -->
-                    <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end space-x-4">
-                        <button onclick="openEditModal()" class="px-4 py-2 text-[#800000] border border-[#800000] rounded-lg hover:bg-[#800000] hover:text-white transition-colors duration-300">
                             Edit Profile
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Edit Profile Modal -->
+            <!-- Complaint Statistics Section -->
+            <div class="profile-card mobile-section">
+                <div class="p-4 sm:p-6 lg:p-8">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center mb-6">
+                        <div class="p-2 bg-[#800000]/10 rounded-lg mr-3">
+                            <svg class="h-5 w-5 text-[#800000]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        Activity Statistics
+                    </h3>
+
+                    <?php if ($totalComplaints > 0): ?>
+                        <!-- Stats Overview -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                            <!-- Total Complaints -->
+                            <div class="stats-card">
+                                <div class="relative z-10">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="p-2 bg-white/20 rounded-lg">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                            </svg>
+                                        </div>
+                                        <span class="text-2xl font-bold"><?= $totalComplaints ?></span>
+                                    </div>
+                                    <h4 class="font-semibold text-white/90 mb-2">Total Complaints</h4>
+                                    <p class="text-xs text-white/70">Submitted to guidance office</p>
+                                </div>
+                            </div>
+
+                            <!-- Most Common Type -->
+                            <div class="stats-card">
+                                <div class="relative z-10">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div class="p-2 bg-white/20 rounded-lg">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                                            </svg>
+                                        </div>
+                                        <span class="text-lg font-bold">
+                                            <?= $mostCommonComplaint ? $mostCommonComplaint['count'] : '0' ?>x
+                                        </span>
+                                    </div>
+                                    <h4 class="font-semibold text-white/90 mb-2">Most Common</h4>
+                                    <p class="text-xs text-white/70">
+                                        <?= $mostCommonComplaint ? htmlspecialchars(ucfirst($mostCommonComplaint['type'])) : 'None yet' ?>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Complaint Breakdown -->
+                        <?php if (!empty($complaintStats)): ?>
+                            <div>
+                                <h4 class="text-base font-semibold text-gray-900 mb-4">Complaint Types</h4>
+                                <div class="space-y-3">
+                                    <?php foreach ($complaintStats as $stat): ?>
+                                        <div class="bg-gray-50 p-4 rounded-lg">
+                                            <div class="flex items-center justify-between mb-2">
+                                                <span class="font-medium text-gray-900">
+                                                    <?= htmlspecialchars(ucfirst($stat['type'])) ?>
+                                                </span>
+                                                <span class="text-sm font-semibold text-gray-600">
+                                                    <?= $stat['type_count'] ?>
+                                                </span>
+                                            </div>
+                                            <div class="progress-bar bg-gray-200">
+                                                <div class="progress-fill bg-[#800000]" 
+                                                     style="width: <?= ($stat['type_count'] / $totalComplaints) * 100 ?>%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
+                                <svg class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <h4 class="text-lg font-medium text-gray-900 mb-2">No Activity Yet</h4>
+                            <p class="text-gray-600 mb-4">You haven't submitted any complaints yet.</p>
+                            <a href="complaint-concern-form.php" class="btn-primary inline-flex">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                                </svg>
+                                Submit Your First Complaint
+                            </a>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Mobile-First Edit Profile Modal -->
             <div id="editModal" class="modal">
-                <div class="modal-content bg-white rounded-xl shadow-lg w-full max-w-2xl mx-4">
-                    <div class="p-6">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xl font-semibold text-gray-800">Edit Profile</h3>
-                            <button onclick="closeEditModal()" class="text-gray-500 hover:text-gray-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <div class="modal-content bg-white rounded-xl shadow-2xl w-full max-w-lg mx-4">
+                    <!-- Modal Header -->
+                    <div class="bg-gradient-to-r from-[#800000] to-[#600000] px-6 py-4 rounded-t-xl">
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-lg font-semibold text-white">Edit Profile ✏️</h3>
+                            <button onclick="closeEditModal()" class="text-white/80 hover:text-white p-1">
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                                 </svg>
                             </button>
                         </div>
-                        
-                        <form action="profile.php" method="POST" class="space-y-6">
+                    </div>
+                    
+                    <!-- Modal Content -->
+                    <div class="p-6">
+                        <form action="profile.php" method="POST" class="space-y-5">
                             <input type="hidden" name="action" value="update_profile">
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Form Fields -->
+                            <div class="space-y-4">
                                 <div>
-                                    <label class="form-label text-[12px]">First Name</label><br>
+                                    <label class="form-label">First Name *</label>
                                     <input type="text" name="first_name" value="<?= htmlspecialchars($student['first_name']) ?>" class="form-input" required>
                                 </div>
                                 
                                 <div>
-                                    <label class="form-label text-[12px]">Middle Name</label><br>
-                                    <input type="text" name="middle_name" value="<?= htmlspecialchars($student['middle_name']) ?>" class="form-input">
+                                    <label class="form-label">Middle Name</label>
+                                    <input type="text" name="middle_name" value="<?= htmlspecialchars($student['middle_name']) ?>" class="form-input" placeholder="Optional">
                                 </div>
                                 
                                 <div>
-                                    <label class="form-label text-[12px]">Last Name</label><br>
+                                    <label class="form-label">Last Name *</label>
                                     <input type="text" name="last_name" value="<?= htmlspecialchars($student['last_name']) ?>" class="form-input" required>
                                 </div>
                                 
-                                <div>
-                                    <label class="form-label text-[12px]">Grade Level</label><br>
-                                    <input type="text" name="grade_level" value="<?= htmlspecialchars($student['grade_level']) ?>" class="form-input" required>
-                                </div>
-                                
-                                <div>
-                                    <label class="form-label text-[12px]">Section</label><br>
-                                    <input type="text" name="section" value="<?= htmlspecialchars($student['section']) ?>" class="form-input" required>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="form-label">Grade Level *</label>
+                                        <select name="grade_level" class="form-input" required>
+                                            <option value="">Select Grade</option>
+                                            <?php for ($i = 7; $i <= 12; $i++): ?>
+                                                <option value="<?= $i ?>" <?= $student['grade_level'] == $i ? 'selected' : '' ?>>
+                                                    Grade <?= $i ?>
+                                                </option>
+                                            <?php endfor; ?>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="form-label">Section *</label>
+                                        <input type="text" name="section" value="<?= htmlspecialchars($student['section']) ?>" class="form-input" required placeholder="e.g., A, B, C">
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="flex justify-end space-x-4 pt-4 border-t">
-                                <button type="button" onclick="closeEditModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                            <!-- Form Actions -->
+                            <div class="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+                                <button type="button" onclick="closeEditModal()" class="btn-secondary order-2 sm:order-1">
                                     Cancel
                                 </button>
-                                <button type="submit" class="px-4 py-2 bg-[#800000] text-white rounded-lg hover:bg-[#600000] transition-colors duration-300">
+                                <button type="submit" class="btn-primary order-1 sm:order-2">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
                                     Save Changes
                                 </button>
                             </div>
@@ -411,39 +646,94 @@ error_log("Session data: " . print_r($_SESSION, true));
                 </div>
             </div>
         <?php } else { ?>
-            <div class="bg-white rounded-xl shadow-sm p-8 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <h3 class="mt-4 text-lg font-medium text-gray-900">No Profile Found</h3>
-                <p class="mt-2 text-gray-600">We couldn't find your student profile information.</p>
+            <!-- No Profile Found State -->
+            <div class="profile-card text-center p-8">
+                <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+                    <svg class="h-10 w-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-2">Profile Not Found</h3>
+                <p class="text-gray-600 mb-4">We couldn't find your student profile information.</p>
+                <a href="student_dashboard.php" class="btn-primary inline-flex">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    Go to Dashboard
+                </a>
             </div>
         <?php } ?>
     </main>
 
     <script>
+        // Mobile-first modal functionality
         function openEditModal() {
-            document.getElementById('editModal').classList.add('active');
+            const modal = document.getElementById('editModal');
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+            
+            // Focus first input for better UX
+            setTimeout(() => {
+                const firstInput = modal.querySelector('input[type="text"]');
+                if (firstInput) firstInput.focus();
+            }, 300);
         }
 
         function closeEditModal() {
-            document.getElementById('editModal').classList.remove('active');
+            const modal = document.getElementById('editModal');
+            modal.classList.remove('active');
             document.body.style.overflow = '';
         }
 
-        // Close modal when clicking outside
-        document.getElementById('editModal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeEditModal();
-            }
-        });
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('editModal');
+            
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeEditModal();
+                }
+            });
 
-        // Close modal when pressing Escape key
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && document.getElementById('editModal').classList.contains('active')) {
-                closeEditModal();
-            }
+            // Close modal when pressing Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && modal.classList.contains('active')) {
+                    closeEditModal();
+                }
+            });
+
+            // Form validation
+            const form = modal.querySelector('form');
+            form.addEventListener('submit', function(e) {
+                const requiredFields = form.querySelectorAll('input[required]');
+                let isValid = true;
+
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        field.classList.add('border-red-500');
+                        isValid = false;
+                    } else {
+                        field.classList.remove('border-red-500');
+                    }
+                });
+
+                if (!isValid) {
+                    e.preventDefault();
+                    // Show error message or highlight fields
+                }
+            });
+
+            // Auto-hide success/error messages
+            const notifications = document.querySelectorAll('[class*="bg-green-50"], [class*="bg-red-50"]');
+            notifications.forEach(notification => {
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 300);
+                }, 5000);
+            });
         });
     </script>
 </body>

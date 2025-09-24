@@ -18,8 +18,8 @@ try {
     $stmt->execute([$username]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // Direct password check (no hashing)
-    if ($user && $password === $user['password']) {
+    // Verify password using password_verify()
+    if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user'] = $user['user_id'];
         $_SESSION['email'] = $user['email'];
         $_SESSION['role'] = $user['role'];
@@ -34,11 +34,13 @@ try {
             header("Location: ../pages/student_dashboard.php");
             exit;
         } else {
-            echo "<script>alert('Unknown user role.'); window.location.href = '../pages/index.php';</script>";
+            header("Location: ../pages/login.php?error=" . urlencode("Unknown user role"));
+            exit;
         }
 
     } else {
-        echo "<script>alert('Invalid username or password'); window.location.href = '../pages/login.php';</script>";
+        header("Location: ../pages/login.php?error=" . urlencode("Invalid username or password"));
+        exit;
     }
 } catch (Exception $e) {
     $pdo->rollBack();

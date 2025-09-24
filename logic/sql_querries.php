@@ -96,13 +96,13 @@ define(
 
 define(
     'SQL_INSERT_COMPLAINTS_CONCERNS',
-    "INSERT INTO " . TBL_COMPLAINTS_CONCERNS . " (student_id, type, description, preferred_counseling_date, evidence, mime_type, status, date_created, time_created)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO " . TBL_COMPLAINTS_CONCERNS . " (student_id, type, severity, description, preferred_counseling_date, evidence, mime_type, status, date_created, time_created)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 );
 
 define(
     'SQL_UPDATE_COMPLAINTS_CONCERNS',
-    "UPDATE " . TBL_COMPLAINTS_CONCERNS . " SET student_id = ?, type = ?, description = ?, preferred_counseling_date = ?, evidence = ?, mime_type = ?, status = ?, date_created = ?, time_created = ? WHERE id = ?"
+    "UPDATE " . TBL_COMPLAINTS_CONCERNS . " SET student_id = ?, type = ?, severity = ?, description = ?, preferred_counseling_date = ?, evidence = ?, mime_type = ?, status = ?, date_created = ?, time_created = ? WHERE id = ?"
 );
 
 define(

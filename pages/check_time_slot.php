@@ -3,7 +3,7 @@ session_start();
 require_once '../logic/sql_querries.php';
 require_once '../logic/db_connection.php';
 
-// Check if staff is logged in
+// Check if user is logged in (staff or student)
 if (!$_SESSION['isLoggedIn']) {
     error_log("Session check failed - isLoggedIn: " . ($_SESSION['isLoggedIn'] ?? 'not set'));
     header('Content-Type: application/json');

@@ -22,21 +22,7 @@ try {
     $description = $_POST['description'];
     $counselingDate = $_POST['counseling_date'];
 
-    // Check if severity column exists in database
-    try {
-        $checkColumnQuery = "SHOW COLUMNS FROM " . TBL_COMPLAINTS_CONCERNS . " LIKE 'severity'";
-        $stmt = $pdo->prepare($checkColumnQuery);
-        $stmt->execute();
-        $columnExists = $stmt->fetch();
-
-        if (!$columnExists) {
-            // If severity column doesn't exist, set to NULL so it uses default
-            $severity = null;
-        }
-    } catch (Exception $e) {
-        // If there's an error checking, assume column doesn't exist
-        $severity = null;
-    }
+    // Severity is now always included in the database schema
     $insertType = $type;
     if ($type === "others" && $other) {
         $insertType = $other;
@@ -45,9 +31,10 @@ try {
     $student_id = $_SESSION['student_id'];
     if ($student_id === 0 || $student_id === null){
         echo "<script>
-        alert('Your complaint hasasdddddddddddddddd.');
-
-    </script>";
+        alert('Error: Invalid student session. Please log in again.');
+        window.location.href = '../pages/index.php';
+        </script>";
+        exit();
     }
     $evidence = null;
     $imageType = null;
@@ -73,65 +60,32 @@ try {
 
     $stmt = $pdo->prepare($queryUse);
     if ($transacType == "update") {
-        if ($severity !== null) {
-            // Include severity if column exists
-            $stmt->execute([
-                $student_id,
-                $insertType,
-                $severity,
-                $description,
-                $counselingDate,
-                $evidence,      // raw binary stored in BLOB column
-                $imageType,
-                $status,   // store MIME type so you can convert later to base64 if needed
-                $date,
-                $time,
-                $rowId
-            ]);
-        } else {
-            // Exclude severity if column doesn't exist
-            $stmt->execute([
-                $student_id,
-                $insertType,
-                $description,
-                $counselingDate,
-                $evidence,      // raw binary stored in BLOB column
-                $imageType,
-                $status,   // store MIME type so you can convert later to base64 if needed
-                $date,
-                $time,
-                $rowId
-            ]);
-        }
+        $stmt->execute([
+            $student_id,
+            $insertType,
+            $severity,
+            $description,
+            $counselingDate,
+            $evidence,      // raw binary stored in BLOB column
+            $imageType,
+            $status,   // store MIME type so you can convert later to base64 if needed
+            $date,
+            $time,
+            $rowId
+        ]);
     } else if ($transacType == "insert") {
-        if ($severity !== null) {
-            // Include severity if column exists
-            $stmt->execute([
-                $student_id,
-                $insertType,
-                $severity,
-                $description,
-                $counselingDate,
-                $evidence,      // raw binary stored in BLOB column
-                $imageType,
-                $status,   // store MIME type so you can convert later to base64 if needed
-                $date,
-                $time,
-            ]);
-        } else {
-            // Exclude severity if column doesn't exist
-            $stmt->execute([
-                $student_id,
-                $insertType,
-                $description,
-                $counselingDate,
-                $evidence,      // raw binary stored in BLOB column
-                $imageType,
-                $status,   // store MIME type so you can convert later to base64 if needed
-                $date,
-                $time,
-            ]);
-        }
+        $stmt->execute([
+            $student_id,
+            $insertType,
+            $severity,
+            $description,
+            $counselingDate,
+            $evidence,      // raw binary stored in BLOB column
+            $imageType,
+            $status,   // store MIME type so you can convert later to base64 if needed
+            $date,
+            $time,
+        ]);
         
         // Get the last inserted complaint ID
         $complaint_id = $pdo->lastInsertId();
@@ -143,7 +97,7 @@ try {
         $student_name = $student['first_name'] . ' ' . $student['last_name'];
 
         if ($student) {
-            $success = createAdminNotif($complaint_id, $student_name, $insertType);
+            $success = notifyAdminNewComplaint($complaint_id, $student_name, $insertType);
             if ($success) {
                 echo "[DEBUG] Notification successfully created.<br>";
                 // Comment out the redirect
@@ -165,21 +119,22 @@ try {
 
             // Get severity level for more detailed message
             $severity_text = '';
-            if ($severity !== null) {
-                switch($severity) {
-                    case 'low':
-                        $severity_text = ' (Low Priority)';
-                        break;
-                    case 'medium':
-                        $severity_text = ' (Medium Priority)';
-                        break;
-                    case 'high':
-                        $severity_text = ' (High Priority)';
-                        break;
-                    case 'urgent':
-                        $severity_text = ' (URGENT)';
-                        break;
-                }
+            switch($severity) {
+                case 'low':
+                    $severity_text = ' (Low Priority)';
+                    break;
+                case 'medium':
+                    $severity_text = ' (Medium Priority)';
+                    break;
+                case 'high':
+                    $severity_text = ' (High Priority)';
+                    break;
+                case 'urgent':
+                    $severity_text = ' (URGENT)';
+                    break;
+                default:
+                    $severity_text = ' (Medium Priority)';
+                    break;
             }
 
             // Create professional and detailed SMS message

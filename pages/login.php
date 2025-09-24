@@ -57,7 +57,6 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 100%;
             background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
             opacity: 0;
             transition: opacity 0.3s ease;
@@ -67,14 +66,31 @@
             opacity: 1;
         }
 
-        @media (max-width: 768px) {
-            .form-container {
-                flex-direction: column;
-            }
-            
-            .form-container > div {
-                width: 100% !important;
-            }
+        .message {
+            display: none;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            width: 100% !important;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
         }
     </style>
 </head>
@@ -98,10 +114,25 @@
                     <p class="text-gray-600 text-sm sm:text-base">Please login to your account</p>
                 </div>
 
+                <!-- Message Display Area -->
+                <?php if (isset($_GET['error'])): ?>
+                    <div id="message" class="message error" style="display: block !important;">
+                        <?php echo htmlspecialchars(urldecode($_GET['error'])); ?>
+                    </div>
+                <?php elseif (isset($_GET['success'])): ?>
+                    <div id="message" class="message success" style="display: block !important;">
+                        <?php echo htmlspecialchars(urldecode($_GET['success'])); ?>
+                    </div>
+                <?php elseif (isset($_GET['warning'])): ?>
+                    <div id="message" class="message warning" style="display: block !important;">
+                        <?php echo htmlspecialchars(urldecode($_GET['warning'])); ?>
+                    </div>
+                <?php endif; ?>
+
                 <form action="../logic/login_logic.php" method="POST" class="space-y-6">
                     <div class="space-y-4">
                         <div>
-                            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username or Email</label>
+                            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                             <input type="text" id="username" name="username" required
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
                         </div>
@@ -112,13 +143,9 @@
                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
                         </div>
 
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <input type="checkbox" id="remember" name="remember"
-                                    class="h-4 w-4 text-[#800000] focus:ring-[#800000] border-gray-300 rounded">
-                                <label for="remember" class="ml-2 block text-sm text-gray-700">Remember me</label>
-                            </div>
-                            <a href="#" class="text-sm text-[#800000] hover:text-[#a52a2a] transition-colors duration-200">Forgot password?</a>
+                        <div class="flex items-center justify-end">
+                            
+                            <a href="forgot-password.php" class="text-sm text-[#800000] hover:text-[#a52a2a] transition-colors duration-200">Forgot password?</a>
                         </div>
                     </div>
 
@@ -137,14 +164,12 @@
             </div>
 
             <!-- Right Column - Image -->
-            <div class="w-full md:w-1/2 bg-[#800000] relative">
-                <div class="absolute inset-0 bg-gradient-to-br from-[#800000]/90 to-[#a52a2a]/90"></div>
-                <img src="../image/login-logo.png" alt="Login" class="w-full h-full object-cover relative z-10">
+            <div class="w-full md:w-1/2  relative">
+                <div class="absolute inset-0 "></div>
+                <img src="../image/ememhs-logo.png" alt="Login" class="w-[500px] h-auto mx-auto p-10 relative z-10">
             </div>
         </div>
     </div>
-
-    <script src="../js/index.js"></script>
 </body>
 
 </html>

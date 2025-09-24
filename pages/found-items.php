@@ -54,7 +54,7 @@ try {
             --danger-color: #ef4444;
             --background-color: #ffffff;
         }
-        
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
@@ -265,110 +265,110 @@ try {
                             <p class="text-gray-500">There are currently no items available for claiming.</p>
                         </div>
                     <?php else: ?>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <?php foreach ($foundItems as $item): ?>
-                            <div class="minimal-card overflow-hidden card-hover compact-card">
-                                <?php if (!empty($item['photo']) && !empty($item['mime_type'])): ?>
-                                    <div class="image-container">
-                                        <img src="data:<?php echo $item['mime_type']; ?>;base64,<?php echo base64_encode($item['photo']); ?>"
-                                            alt="<?php echo htmlspecialchars($item['item_name']); ?>" 
-                                            onclick="openImageModal(this.src)" />
-                                        <div class="absolute top-2 right-2">
-                                            <span class="status-badge status-found">
-                                                <i class="fas fa-check-circle mr-1"></i> Found
-                                            </span>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
-
-                                <div class="p-6 compact-card-content">
-                                    <div class="mb-4">
-                                        <h3 class="text-lg font-semibold text-gray-900 mb-1">
-                                            <?php echo htmlspecialchars($item['item_name']); ?>
-                                        </h3>
-                                        <p class="text-sm text-gray-500">
-                                            <i class="fas fa-tag mr-1"></i>
-                                            <?php echo htmlspecialchars($item['category']); ?>
-                                        </p>
-                                    </div>
-
-                                    <div class="compact-info mb-4">
-                                        <div class="info-item">
-                                            <span class="info-label">
-                                                <i class="fas fa-align-left mr-1"></i> Description
-                                            </span>
-                                            <span class="info-value">
-                                                <?php echo htmlspecialchars($item['description'] ?? 'No description provided'); ?>
-                                            </span>
-                                        </div>
-
-                                        <div class="info-item">
-                                            <span class="info-label">
-                                                <i class="fas fa-map-marker-alt mr-1"></i> Location
-                                            </span>
-                                            <span class="info-value">
-                                                <?php echo htmlspecialchars($item['location'] ?? 'Not specified'); ?>
-                                            </span>
-                                        </div>
-
-                                        <div class="info-item">
-                                            <span class="info-label">
-                                                <i class="fas fa-calendar-alt mr-1"></i> Date
-                                            </span>
-                                            <span class="info-value">
-                                                <?php echo date('F j, Y', strtotime($item['date'])); ?>
-                                            </span>
-                                        </div>
-
-                                        <div class="info-item">
-                                            <span class="info-label">
-                                                <i class="fas fa-clock mr-1"></i> Time
-                                            </span>
-                                            <span class="info-value">
-                                                <?php echo date('g:i A', strtotime($item['time'])); ?>
-                                            </span>
-                                        </div>
-
-                                        <?php if (!empty($item['student_id'])): ?>
-                                            <div class="info-item col-span-2">
-                                                <span class="info-label">
-                                                    <i class="fas fa-user mr-1"></i> Original Owner
-                                                </span>
-                                                <span class="info-value">
-                                                    <?php echo htmlspecialchars($item['first_name'] . ' ' . $item['last_name']); ?>
-                                                    <span class="text-gray-500 ml-1">
-                                                        (ID: <?php echo htmlspecialchars($item['student_id']); ?>)
-                                                    </span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <?php foreach ($foundItems as $item): ?>
+                                <div class="minimal-card overflow-hidden card-hover compact-card">
+                                    <?php if (!empty($item['photo']) && !empty($item['mime_type'])): ?>
+                                        <div class="image-container">
+                                            <img src="data:<?php echo $item['mime_type']; ?>;base64,<?php echo base64_encode($item['photo']); ?>"
+                                                alt="<?php echo htmlspecialchars($item['item_name']); ?>"
+                                                onclick="openImageModal(this.src)" />
+                                            <div class="absolute top-2 right-2">
+                                                <span class="status-badge status-found">
+                                                    <i class="fas fa-check-circle mr-1"></i> Found
                                                 </span>
                                             </div>
-                                        <?php endif; ?>
-                                    </div>
+                                        </div>
+                                    <?php endif; ?>
 
-                                    <?php if (empty($item['claimed_by_student_id'])): ?>
-                                        <div class="mt-auto">
-                                            <button onclick="claimItem(<?php echo (int)$item['id']; ?>, <?php echo (int)$item['student_id']; ?>, '<?php echo addslashes($item['item_name']); ?>')"
-                                                class="w-full btn-primary text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center mb-2">
-                                                <i class="fas fa-camera mr-2"></i>
-                                                Claim Item
-                                            </button>
-                                            <!-- <button onclick="notifyStudent(<?php echo $item['id']; ?>)"
+                                    <div class="p-6 compact-card-content">
+                                        <div class="mb-4">
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-1">
+                                                <?php echo htmlspecialchars($item['item_name']); ?>
+                                            </h3>
+                                            <p class="text-sm text-gray-500">
+                                                <i class="fas fa-tag mr-1"></i>
+                                                <?php echo htmlspecialchars($item['category']); ?>
+                                            </p>
+                                        </div>
+
+                                        <div class="compact-info mb-4">
+                                            <div class="info-item">
+                                                <span class="info-label">
+                                                    <i class="fas fa-align-left mr-1"></i> Description
+                                                </span>
+                                                <span class="info-value">
+                                                    <?php echo htmlspecialchars($item['description'] ?? 'No description provided'); ?>
+                                                </span>
+                                            </div>
+
+                                            <div class="info-item">
+                                                <span class="info-label">
+                                                    <i class="fas fa-map-marker-alt mr-1"></i> Location
+                                                </span>
+                                                <span class="info-value">
+                                                    <?php echo htmlspecialchars($item['location'] ?? 'Not specified'); ?>
+                                                </span>
+                                            </div>
+
+                                            <div class="info-item">
+                                                <span class="info-label">
+                                                    <i class="fas fa-calendar-alt mr-1"></i> Date
+                                                </span>
+                                                <span class="info-value">
+                                                    <?php echo date('F j, Y', strtotime($item['date'])); ?>
+                                                </span>
+                                            </div>
+
+                                            <div class="info-item">
+                                                <span class="info-label">
+                                                    <i class="fas fa-clock mr-1"></i> Time
+                                                </span>
+                                                <span class="info-value">
+                                                    <?php echo date('g:i A', strtotime($item['time'])); ?>
+                                                </span>
+                                            </div>
+
+                                            <?php if (!empty($item['student_id'])): ?>
+                                                <div class="info-item col-span-2">
+                                                    <span class="info-label">
+                                                        <i class="fas fa-user mr-1"></i> Original Owner
+                                                    </span>
+                                                    <span class="info-value">
+                                                        <?php echo htmlspecialchars($item['first_name'] . ' ' . $item['last_name']); ?>
+                                                        <span class="text-gray-500 ml-1">
+                                                            (ID: <?php echo htmlspecialchars($item['student_id']); ?>)
+                                                        </span>
+                                                    </span>
+                                                </div>
+                                            <?php endif; ?>
+                                        </div>
+
+                                        <?php if (empty($item['claimed_by_student_id'])): ?>
+                                            <div class="mt-auto">
+                                                <button onclick="claimItem(<?php echo (int)$item['id']; ?>, <?php echo (int)$item['student_id']; ?>, '<?php echo addslashes($item['item_name']); ?>')"
+                                                    class="w-full btn-primary text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center mb-2">
+                                                    <i class="fas fa-camera mr-2"></i>
+                                                    Claim Item
+                                                </button>
+                                                <!-- <button onclick="notifyStudent(<?php echo $item['id']; ?>)"
                                                 class="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium flex items-center justify-center">
                                                 <i class="fas fa-bell mr-2"></i>
                                                 Notify Original Owner
                                             </button> -->
-                                        </div>
-                                    <?php else: ?>
-                                        <div class="mt-auto">
-                                            <div class="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm text-center">
-                                                <i class="fas fa-check-circle mr-1"></i>
-                                                Already Claimed
                                             </div>
-                                        </div>
-                                    <?php endif; ?>
+                                        <?php else: ?>
+                                            <div class="mt-auto">
+                                                <div class="bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm text-center">
+                                                    <i class="fas fa-check-circle mr-1"></i>
+                                                    Already Claimed
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    </div>
                                 </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
+                            <?php endforeach; ?>
+                        </div>
                     <?php endif; ?>
                 </div>
 
@@ -520,31 +520,31 @@ try {
         function notifyStudent(itemId) {
             if (confirm('Are you sure you want to notify the student about this found item?')) {
                 fetch('notify_student.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: 'item_id=' + itemId
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Student has been notified successfully!');
-                        location.reload();
-                    } else {
-                        alert('Error: ' + data.message);
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred while notifying the student.');
-                });
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: 'item_id=' + itemId
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Student has been notified successfully!');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred while notifying the student.');
+                    });
             }
         }
 
         function claimItem(itemId, studentsId, itemName) {
             // Open camera modal
-            openClaimModal(itemId, studentsId,  itemName);
+            openClaimModal(itemId, studentsId, itemName);
         }
 
         function openClaimModal(itemId, studentsId, itemName) {
@@ -623,7 +623,9 @@ try {
             try {
                 const video = document.getElementById('cameraFeed');
                 const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user' }
+                    video: {
+                        facingMode: 'user'
+                    }
                 });
                 cameraStream = stream;
                 video.srcObject = stream;
@@ -716,27 +718,27 @@ try {
 
             // Send claim request
             fetch('../logic/claim_item_logic.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    alert('Item claimed successfully!');
-                    closeClaimModal();
-                    location.reload();
-                } else {
-                    alert('Error: ' + data.message);
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert('Item claimed successfully!');
+                        closeClaimModal();
+                        location.reload();
+                    } else {
+                        alert('Error: ' + data.message);
+                        confirmBtn.innerHTML = originalText;
+                        confirmBtn.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while claiming the item');
                     confirmBtn.innerHTML = originalText;
                     confirmBtn.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('An error occurred while claiming the item');
-                confirmBtn.innerHTML = originalText;
-                confirmBtn.disabled = false;
-            });
+                });
         }
 
         function viewClaimantPhoto(itemId, itemName) {
@@ -752,39 +754,38 @@ try {
 
             // Fetch claimant photo via AJAX
             fetch('get_claimant_photo.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: 'item_id=' + itemId
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success && data.photo && data.mime_type) {
-                    // Set photo source
-                    const photoSrc = `data:${data.mime_type};base64,${data.photo}`;
-                    document.getElementById('claimantPhotoImage').src = photoSrc;
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: 'item_id=' + itemId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.photo && data.mime_type) {
+                        // Set photo source
+                        const photoSrc = `data:${data.mime_type};base64,${data.photo}`;
+                        document.getElementById('claimantPhotoImage').src = photoSrc;
 
-                    // Set photo info
-                    const claimDate = new Date(data.claimed_at);
-                    document.getElementById('claimantPhotoInfo').textContent =
-                        `Claimed by: ${data.claimed_by_first_name} ${data.claimed_by_last_name} on ${claimDate.toLocaleDateString()} at ${claimDate.toLocaleTimeString()}`;
-                } else {
-                    document.getElementById('claimantPhotoInfo').textContent = 'No photo available or error loading photo.';
+                        // Set photo info
+                        const claimDate = new Date(data.claimed_at);
+                        document.getElementById('claimantPhotoInfo').textContent =
+                            `Claimed by: ${data.claimed_by_first_name} ${data.claimed_by_last_name} on ${claimDate.toLocaleDateString()} at ${claimDate.toLocaleTimeString()}`;
+                    } else {
+                        document.getElementById('claimantPhotoInfo').textContent = 'No photo available or error loading photo.';
+                        document.getElementById('claimantPhotoImage').src = '';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading claimant photo:', error);
+                    document.getElementById('claimantPhotoInfo').textContent = 'Error loading photo. Please try again.';
                     document.getElementById('claimantPhotoImage').src = '';
-                }
-            })
-            .catch(error => {
-                console.error('Error loading claimant photo:', error);
-                document.getElementById('claimantPhotoInfo').textContent = 'Error loading photo. Please try again.';
-                document.getElementById('claimantPhotoImage').src = '';
-            });
+                });
         }
 
         function closeClaimantPhotoModal() {
             document.getElementById('claimantPhotoModal').classList.add('hidden');
         }
-
     </script>
 </body>
 

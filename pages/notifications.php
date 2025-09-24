@@ -34,7 +34,7 @@ try {
         $unreadCount = getUnreadNotificationsCount($id);
         error_log("Student notifications fetched: " . print_r($notifications, true));
     }
-    
+
     // Mark all notifications as read when viewing the page
     if ($role === 'admin') {
         markAllAdminNotificationsAsRead($id);
@@ -52,6 +52,7 @@ try {
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -63,18 +64,22 @@ try {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         }
+
         .notification-item {
             transition: all 0.3s ease;
             border-left: 4px solid transparent;
         }
+
         .notification-item:hover {
             transform: translateX(5px);
             background-color: #f8f9fa;
         }
+
         .notification-item.unread {
             border-left-color: #800000;
             background-color: #fff5f5;
         }
+
         .notification-badge {
             position: absolute;
             top: -5px;
@@ -85,57 +90,117 @@ try {
             padding: 2px 6px;
             font-size: 10px;
         }
+
         .notification-details {
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
             opacity: 0;
         }
+
         .notification-details.active {
             max-height: 500px;
             opacity: 1;
             transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
         }
+
         .chevron-icon {
             transition: transform 0.3s ease;
         }
+
         .chevron-icon.active {
             transform: rotate(180deg);
         }
+
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
             font-size: 0.75rem;
             font-weight: 500;
         }
+
         .status-badge.pending {
             background-color: #FEF3C7;
             color: #92400E;
         }
+
         .status-badge.scheduled {
             background-color: #DBEAFE;
             color: #1E40AF;
         }
+
         .status-badge.resolved {
             background-color: #D1FAE5;
             color: #065F46;
         }
+
         .status-badge.found {
             background-color: #E0E7FF;
             color: #3730A3;
         }
+
+        .severity-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .severity-badge.severity-low {
+            background-color: #D1FAE5;
+            color: #065F46;
+        }
+
+        .severity-badge.severity-medium {
+            background-color: #FEF3C7;
+            color: #92400E;
+        }
+
+        .severity-badge.severity-high {
+            background-color: #FED7AA;
+            color: #C2410C;
+        }
+
+        .severity-badge.severity-urgent {
+            background-color: #FEE2E2;
+            color: #DC2626;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
         .animate-fade-in {
             animation: fadeIn 0.5s ease-in;
         }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
+
         .notification-count-badge {
             position: relative;
             display: inline-flex;
             align-items: center;
         }
+
         .notification-count-badge::after {
             content: '';
             position: absolute;
@@ -149,12 +214,13 @@ try {
         }
     </style>
 </head>
+
 <body class="min-h-screen">
-    <?php 
-    if ($_SESSION['role'] === 'student'){
-        include 'navigation.php'; 
-    }else{
-        include 'navigation-admin.php'; 
+    <?php
+    if ($_SESSION['role'] === 'student') {
+        include 'navigation.php';
+    } else {
+        include 'navigation-admin.php';
     }
     ?>
 
@@ -166,16 +232,16 @@ try {
                     <p class="text-gray-600">Stay updated with your complaints, lost items, and counseling schedules</p>
                 </div>
                 <?php if ($unreadCount > 0): ?>
-                <div class="notification-count-badge">
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
-                        <?php echo $unreadCount; ?> new notification<?php echo $unreadCount > 1 ? 's' : ''; ?>
-                    </span>
-                </div>
+                    <div class="notification-count-badge">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                            <?php echo $unreadCount; ?> new notification<?php echo $unreadCount > 1 ? 's' : ''; ?>
+                        </span>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
 
-        
+
 
         <div class="bg-white rounded-lg shadow-lg overflow-hidden animate-fade-in">
             <?php if (empty($notifications)): ?>
@@ -247,9 +313,9 @@ try {
                                                 </p>
                                                 <div class="mt-1 flex items-center space-x-2">
                                                     <span class="text-xs text-gray-500">
-                                                        <?php 
-                                                            $date = new DateTime($notification['date_created'] . ' ' . $notification['time_created']);
-                                                            echo $date->format('F j, Y g:i A');
+                                                        <?php
+                                                        $date = new DateTime($notification['date_created'] . ' ' . $notification['time_created']);
+                                                        echo $date->format('F j, Y g:i A');
                                                         ?>
                                                     </span>
                                                     <?php if (!$notification['is_read']): ?>
@@ -266,7 +332,7 @@ try {
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <?php if ($notification['reference_type'] === 'complaint'): ?>
                                 <div class="notification-details p-4 bg-gray-50">
                                     <div class="grid grid-cols-2 gap-4">
@@ -281,21 +347,39 @@ try {
                                         <div>
                                             <p class="text-sm font-medium text-gray-500">Status</p>
                                             <p class="text-sm">
-                                                <span class="status-badge <?php echo strtolower($notification['reference_status']); ?>">
-                                                    <?php echo htmlspecialchars($notification['reference_status']); ?>
+                                                <span class="status-badge <?php echo strtolower($notification['reference_status'] ?? 'unknown'); ?>">
+                                                    <?php echo htmlspecialchars($notification['reference_status'] ?? 'Unknown'); ?>
                                                 </span>
                                             </p>
                                         </div>
+                                        <?php if (!empty($notification['severity'])): ?>
+                                            <div>
+                                                <p class="text-sm font-medium text-gray-500">Severity</p>
+                                                <p class="text-sm">
+                                                    <span class="severity-badge severity-<?php echo strtolower($notification['severity']); ?>">
+                                                        <?php
+                                                        $severity_labels = [
+                                                            'low' => 'Low Priority',
+                                                            'medium' => 'Medium Priority',
+                                                            'high' => 'High Priority',
+                                                            'urgent' => 'URGENT'
+                                                        ];
+                                                        echo htmlspecialchars($severity_labels[$notification['severity']] ?? ucfirst($notification['severity']));
+                                                        ?>
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        <?php endif; ?>
                                         <?php if ($notification['type'] === 'new_complaint'): ?>
-                                        <div class="col-span-2 mt-4">
-                                            <a href="complaint-concern-admin.php" 
-                                               class="inline-flex items-center px-4 py-2 bg-[#800000] text-white rounded-lg hover:bg-[#a52a2a] transition-colors">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
-                                                </svg>
-                                                Manage Complaint
-                                            </a>
-                                        </div>
+                                            <div class="col-span-2 mt-4">
+                                                <a href="complaint-concern-admin.php"
+                                                    class="inline-flex items-center px-4 py-2 bg-[#800000] text-white rounded-lg hover:bg-[#a52a2a] transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                                                    </svg>
+                                                    Manage Complaint
+                                                </a>
+                                            </div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -312,13 +396,13 @@ try {
                                         </div>
                                         <div>
                                             <p class="text-sm font-medium text-gray-500">Item Category</p>
-                                            <p class="text-sm text-gray-900 capitalize"><?php echo htmlspecialchars($notification['reference_type_detail']); ?></p>
+                                            <p class="text-sm text-gray-900 capitalize"><?php echo htmlspecialchars($notification['reference_type_detail'] ?? 'Not specified'); ?></p>
                                         </div>
                                         <div>
                                             <p class="text-sm font-medium text-gray-500">Item Status</p>
                                             <p class="text-sm">
-                                                <span class="status-badge <?php echo strtolower($notification['reference_status']); ?>">
-                                                    <?php echo htmlspecialchars($notification['reference_status']); ?>
+                                                <span class="status-badge <?php echo strtolower($notification['reference_status'] ?? 'unknown'); ?>">
+                                                    <?php echo htmlspecialchars($notification['reference_status'] ?? 'Unknown'); ?>
                                                 </span>
                                             </p>
                                         </div>
@@ -331,12 +415,12 @@ try {
                                             <p class="text-sm text-gray-900"><?php echo htmlspecialchars($notification['location_found'] ?? 'Not specified'); ?></p>
                                         </div>
                                         <?php if (!empty($notification['photo']) && !empty($notification['mime_type'])): ?>
-                                        <div class="col-span-2">
-                                            <p class="text-sm font-medium text-gray-500 mb-2">Item Photo</p>
-                                            <img src="data:<?php echo $notification['mime_type']; ?>;base64,<?php echo base64_encode($notification['photo']); ?>" 
-                                                 alt="Item Photo" 
-                                                 class="w-full h-auto max-h-48 object-contain rounded-lg shadow-sm" />
-                                        </div>
+                                            <div class="col-span-2">
+                                                <p class="text-sm font-medium text-gray-500 mb-2">Item Photo</p>
+                                                <img src="data:<?php echo $notification['mime_type']; ?>;base64,<?php echo base64_encode($notification['photo']); ?>"
+                                                    alt="Item Photo"
+                                                    class="w-full h-auto max-h-48 object-contain rounded-lg shadow-sm" />
+                                            </div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -352,10 +436,11 @@ try {
         function toggleDetails(element) {
             const details = element.nextElementSibling;
             const chevron = element.querySelector('.chevron-icon');
-            
+
             details.classList.toggle('active');
             chevron.classList.toggle('active');
         }
     </script>
 </body>
-</html> 
+
+</html>
