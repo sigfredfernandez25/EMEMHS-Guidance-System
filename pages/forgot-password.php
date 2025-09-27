@@ -84,7 +84,8 @@
                 // Generate token and prepare reset link
                 const email = document.getElementById('email').value;
                 const token = generateToken();
-                const resetLink = `${window.location.origin}/EMEMHS-Guidance-System/pages/reset-password.php?token=${encodeURIComponent(token)}`;
+                const resetLink = `${window.location.origin}/EMEMHS-Guidance-System/pages/reset-password.php?token=${encodeURIComponent(token)}`;//if local
+                //const resetLink = `${window.location.origin}/pages/reset-password.php?token=${encodeURIComponent(token)}`; //if online
                 
                 // First, store the token in the database
                 const storeResponse = await fetch('../logic/store_reset_token.php', {

@@ -1,0 +1,37 @@
+RewriteEngine On
+RewriteBase /
+
+# Allow direct access to PHP files in logic
+RewriteCond %{REQUEST_URI} ^/logic/ [NC]
+RewriteRule ^ - [L]
+
+# Optional clean URL for reset password
+# So you can open /reset-password?token=xxx
+RewriteRule ^reset-password$ pages/reset-password.php [L,QSA]
+
+# If not file or folder, send to index.php
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+# Block sensitive files
+<FilesMatch "^(composer\.json|\.env|\.gitignore|README\.md|db_connection\.php|config\.php)$">
+    Require all denied
+</FilesMatch>
+
+# Explicitly allow reset handlers
+<FilesMatch "^(store_reset_token\.php|reset_password_handler\.php)$">
+    Require all granted
+</FilesMatch>
+
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-XSS-Protection "1; mode=block"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+ErrorDocument 404 /pages/404.php
+ErrorDocument 403 /pages/403.php
