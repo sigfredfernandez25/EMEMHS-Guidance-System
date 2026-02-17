@@ -1,6 +1,10 @@
 <?php
+require_once 'config.php';
 require_once 'sql_querries.php';
 require_once 'db_connection.php'; // make sure you have PDO $pdo
+
+// Get Semaphore configuration from config file
+$semaphoreConfig = getSemaphoreConfig();
 
 // Get admin contact number
 $stmt = $pdo->prepare("SELECT contact_number FROM users WHERE role = :role LIMIT 1");
@@ -48,9 +52,9 @@ if ($admin && !empty($admin['contact_number'])) {
         $message .= "EMEMHS Guidance Department";
 
         // ✅ Semaphore API
-        $apiKey = "4f13582c3b12408500a7195239a591b7";
-        $senderName = "EMEMHS";
-        $url = "https://api.semaphore.co/api/v4/messages";
+        $apiKey = $semaphoreConfig['api_key'];
+        $senderName = $semaphoreConfig['sender_name'];
+        $url = $semaphoreConfig['api_url'];
 
         $data = [
             "apikey" => $apiKey,

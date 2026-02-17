@@ -4,14 +4,25 @@ error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors in output
 ini_set('log_errors', 1);
 
+// Load configuration
+require_once __DIR__ . '/../config.php';
+
 // Set JSON header early
 header('Content-Type: application/json');
 
 class AdminSMSNotifications {
 
-    private $apiKey = "4f13582c3b12408500a7195239a591b7";
-    private $senderName = "EMEMHS";
-    private $apiUrl = "https://api.semaphore.co/api/v4/messages";
+    private $apiKey;
+    private $senderName;
+    private $apiUrl;
+
+    public function __construct() {
+        // Load configuration from config file
+        $config = getSemaphoreConfig();
+        $this->apiKey = $config['api_key'];
+        $this->senderName = $config['sender_name'];
+        $this->apiUrl = $config['api_url'];
+    }
 
     /**
      * Get admin contact number from database

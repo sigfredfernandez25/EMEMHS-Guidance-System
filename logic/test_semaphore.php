@@ -4,12 +4,14 @@
  * This file helps verify that the Semaphore API is working correctly
  */
 
+require_once 'config.php';
 header('Content-Type: application/json');
 
-// Semaphore API credentials
-$apiKey = "4f13582c3b12408500a7195239a591b7";
-$senderName = "EMEMHS";
-$apiUrl = "https://api.semaphore.co/api/v4/messages";
+// Get Semaphore configuration from config file
+$semaphoreConfig = getSemaphoreConfig();
+$apiKey = $semaphoreConfig['api_key'];
+$senderName = $semaphoreConfig['sender_name'];
+$apiUrl = $semaphoreConfig['api_url'];
 
 // Test phone number (replace with actual test number)
 $testNumber = "09151018824"; // Replace with your test number

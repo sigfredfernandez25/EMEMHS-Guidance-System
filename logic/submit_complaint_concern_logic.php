@@ -1,8 +1,12 @@
 <?php
+require_once 'config.php';
 require_once 'sql_querries.php';
 require_once 'db_connection.php';
 require_once 'notification_logic.php';
 session_start();
+
+// Get Semaphore configuration from config file
+$semaphoreConfig = getSemaphoreConfig();
 
 $date = date('Y-m-d');
 $time = date('H:i:s');
@@ -105,10 +109,10 @@ try {
         $parent_name = $parent['parent_name'] ?? "Parent";
 
         if ($parent && !empty($contact_number)) {
-            // Semaphore API configuration
-            $apiKey = "4f13582c3b12408500a7195239a591b7";
-            $senderName = "EMEMHS";
-            $url = "https://api.semaphore.co/api/v4/messages";
+            // Semaphore API configuration from config file
+            $apiKey = $semaphoreConfig['api_key'];
+            $senderName = $semaphoreConfig['sender_name'];
+            $url = $semaphoreConfig['api_url'];
 
             $severity_text = match($severity) {
                 'low' => 'Low',

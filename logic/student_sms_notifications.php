@@ -4,11 +4,21 @@
  * Sends SMS to students when their lost items are found
  */
 
+require_once __DIR__ . '/../config.php';
+
 class StudentSMSNotifications {
     
-    private $apiKey = "4f13582c3b12408500a7195239a591b7";
-    private $senderName = "EMEMHS";
-    private $apiUrl = "https://api.semaphore.co/api/v4/messages";
+    private $apiKey;
+    private $senderName;
+    private $apiUrl;
+
+    public function __construct() {
+        // Load configuration from config file
+        $config = getSemaphoreConfig();
+        $this->apiKey = $config['api_key'];
+        $this->senderName = $config['sender_name'];
+        $this->apiUrl = $config['api_url'];
+    }
 
     /**
      * Send SMS using Semaphore API
