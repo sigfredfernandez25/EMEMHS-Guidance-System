@@ -1,6 +1,7 @@
 <?php
 require_once 'sql_querries.php';
 require_once 'db_connection.php';
+require_once 'notification_logic.php';
 session_start();
 
 $date = date('Y-m-d');
@@ -105,6 +106,38 @@ try {
             $date,
             $time
         ]);
+
+        // Get the last inserted item ID
+        $item_id = $pdo->lastInsertId();
+
+        // Get the student's name
+        $stmt = $pdo->prepare("SELECT first_name, last_name FROM students WHERE id = ?");
+        $stmt->execute([$student_id]);
+        $student = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($student) {
+            $student_name = $student['first_name'] . ' ' . $student['last_name'];
+            
+            // Notify admin about new lost item report
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE role = 'admin'");
+            $stmt->execute();
+            $admins = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($admins as $admin) {
+                $message = "New lost item report from $student_name: $itemName ($finalCategory)";
+                $stmt = $pdo->prepare("
+                    INSERT INTO notifications (user_id, reference_id, reference_type, type, message, date_created, time_created)
+                    VALUES (?, ?, 'lost_item', 'new_lost_item', ?, ?, ?)
+                ");
+                $stmt->execute([
+                    $admin['id'],
+                    $item_id,
+                    $message,
+                    $date,
+                    $time
+                ]);
+            }
+        }
     }
 
     $pdo->commit();

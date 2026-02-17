@@ -3,6 +3,7 @@ session_start();
 require_once '../logic/sql_querries.php';
 require_once '../logic/db_connection.php';
 require_once '../logic/notification_logic.php';
+require_once '../logic/student_sms_notifications.php';
 
 // Enable error reporting for debugging
 error_reporting(E_ALL);
@@ -48,7 +49,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['item_id'])) {
             $update_stmt = $pdo->prepare("UPDATE lost_items SET status = 'found' WHERE id = ?");
             $update_stmt->execute([$item_id]);
             
-            echo json_encode(['success' => true, 'message' => 'Student has been notified successfully']);
+            // Send SMS notification if student opted in
+            $smsNotifier = new StudentSMSNotifications();
+            $smsResult = $smsNotifier->notifyItemFound($item_id);
+            
+            if ($smsResult['success']) {
+                error_log("SMS sent successfully to student");
+                echo json_encode(['success' => true, 'message' => 'Student has been notified successfully (in-app and SMS)']);
+            } else {
+                error_log("SMS notification failed or not sent: " . $smsResult['message']);
+                echo json_encode(['success' => true, 'message' => 'Student has been notified successfully (in-app only)']);
+            }
         } else {
             error_log("Failed to create notification. Check if student_id exists in users table.");
             throw new Exception("Failed to create notification - Please check if student exists in the system");

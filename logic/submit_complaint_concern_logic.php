@@ -97,7 +97,7 @@ try {
             notifyAdminNewComplaint($complaint_id, $student_name, $insertType);
         }
 
-        // Notify parent via SMS
+        // Notify parent via SMS using Semaphore
         $stmt = $pdo->prepare("SELECT contact_number, parent_name FROM parents WHERE student_id = ?");
         $stmt->execute([$student_id]);
         $parent = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -105,9 +105,10 @@ try {
         $parent_name = $parent['parent_name'] ?? "Parent";
 
         if ($parent && !empty($contact_number)) {
-            $apiToken = "5ff985e5-7b20-45cb-9044-ba67886de76b";
-            $deviceId = "68cfb7f8b7dd99288d0a3f61";
-            $url = "https://api.textbee.dev/api/v1/gateway/devices/$deviceId/send-sms";
+            // Semaphore API configuration
+            $apiKey = "4f13582c3b12408500a7195239a591b7";
+            $senderName = "EMEMHS";
+            $url = "https://api.semaphore.co/api/v4/messages";
 
             $severity_text = match($severity) {
                 'low' => ' (Low Priority)',
@@ -128,20 +129,24 @@ try {
             $message .= "EMEMHS Guidance Department\nContact: (02) 123-4567";
 
             $data = [
-                "recipients" => [$contact_number],
-                "message" => $message
+                "apikey" => $apiKey,
+                "number" => $contact_number,
+                "message" => $message,
+                "sendername" => $senderName
             ];
-            $ch = curl_init($url);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                "x-api-key: $apiToken",
-                "Content-Type: application/json"
-            ]);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_POST, true);
 
-            curl_exec($ch);
-            curl_close($ch);
+            // Check if curl_init exists before using it
+            if (function_exists('curl_init')) {
+                $ch = curl_init($url);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+                curl_setopt($ch, CURLOPT_POST, true);
+
+                curl_exec($ch);
+                curl_close($ch);
+            } else {
+                error_log("cURL is not enabled. Cannot send SMS notification.");
+            }
         }
     }
 

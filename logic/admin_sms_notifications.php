@@ -9,9 +9,9 @@ header('Content-Type: application/json');
 
 class AdminSMSNotifications {
 
-    private $apiToken = "5ff985e5-7b20-45cb-9044-ba67886de76b";
-    private $deviceId = "68cfb7f8b7dd99288d0a3f61";
-    private $apiUrl = "https://api.textbee.dev/api/v1/gateway/devices/68cfb7f8b7dd99288d0a3f61/send-sms";
+    private $apiKey = "4f13582c3b12408500a7195239a591b7";
+    private $senderName = "EMEMHS";
+    private $apiUrl = "https://api.semaphore.co/api/v4/messages";
 
     /**
      * Get admin contact number from database
@@ -57,22 +57,23 @@ class AdminSMSNotifications {
     }
 
     /**
-     * Send SMS using TextBee API
+     * Send SMS using Semaphore API
      */
     private function sendSMS($recipients, $message) {
         try {
+            // Semaphore accepts comma-separated numbers for bulk SMS
+            $numbers = is_array($recipients) ? implode(',', $recipients) : $recipients;
+
             $data = [
-                "recipients" => $recipients,
-                "message" => $message
+                "apikey" => $this->apiKey,
+                "number" => $numbers,
+                "message" => $message,
+                "sendername" => $this->senderName
             ];
 
             $ch = curl_init($this->apiUrl);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                "x-api-key: " . $this->apiToken,
-                "Content-Type: application/json"
-            ]);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
             curl_setopt($ch, CURLOPT_POST, true);
 
             $response = curl_exec($ch);
