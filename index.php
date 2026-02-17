@@ -49,6 +49,10 @@
             position: relative;
             overflow: hidden;
         }
+        .feature-card > * {
+            position: relative;
+            z-index: 1;
+        }
         .feature-card::before {
             content: '';
             position: absolute;
@@ -56,6 +60,8 @@
             background: linear-gradient(135deg, rgba(128,0,0,0.1) 0%, rgba(128,0,0,0) 100%);
             opacity: 0;
             transition: opacity 0.4s ease;
+            pointer-events: none;
+            z-index: 0;
         }
         .feature-card:hover {
             transform: translateY(-8px);
@@ -518,6 +524,47 @@
         </div>
     </section>
 
+    <!-- Anonymous Suggestion Box Section -->
+    <section class="py-24 px-4 bg-white relative z-10 section-pattern">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-12">
+                <h2 class="section-title mb-4">Anonymous Suggestion Box</h2>
+                <p class="section-subtitle">Share your thoughts and suggestions to help us improve</p>
+            </div>
+            <div class="feature-card p-8 max-w-2xl mx-auto">
+                <form id="suggestionForm" class="space-y-6">
+                    <div>
+                        <label for="suggestion" class="block text-sm font-medium text-gray-700 mb-2">Your Suggestion</label>
+                        <textarea 
+                            id="suggestion" 
+                            name="suggestion" 
+                            rows="6" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent resize-none"
+                            placeholder="Share your thoughts, ideas, or concerns anonymously..."
+                            required
+                        ></textarea>
+                    </div>
+                    <div id="rateLimitMessage" class="hidden text-sm text-orange-600 bg-orange-50 p-3 rounded-lg">
+                        You can only submit one suggestion per day. Please try again tomorrow.
+                    </div>
+                    <div id="successMessage" class="hidden text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+                        Thank you for your suggestion! It has been submitted successfully.
+                    </div>
+                    <div id="errorMessage" class="hidden text-sm text-red-600 bg-red-50 p-3 rounded-lg">
+                        Something went wrong. Please try again later.
+                    </div>
+                    <button 
+                        type="submit" 
+                        id="submitBtn"
+                        class="w-full btn-primary px-8 py-3 rounded-xl font-semibold text-base"
+                    >
+                        Submit Suggestion
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+
     <!-- CTA Section -->
     <section class="py-24 px-4 bg-[#f8eaea] relative z-10 section-pattern">
         <div class="max-w-4xl mx-auto text-center">
@@ -587,6 +634,95 @@
                     }, 1000);
                 }
             });
+        });
+
+        // Anonymous Suggestion Box Logic
+        const suggestionForm = document.getElementById('suggestionForm');
+        const suggestionInput = document.getElementById('suggestion');
+        const submitBtn = document.getElementById('submitBtn');
+        const rateLimitMessage = document.getElementById('rateLimitMessage');
+        const successMessage = document.getElementById('successMessage');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Check if user can submit (rate limiting)
+        function canSubmitSuggestion() {
+            const lastSubmission = localStorage.getItem('lastSuggestionSubmission');
+            if (!lastSubmission) return true;
+            
+            const lastSubmissionDate = new Date(lastSubmission);
+            const now = new Date();
+            const hoursSinceLastSubmission = (now - lastSubmissionDate) / (1000 * 60 * 60);
+            
+            return hoursSinceLastSubmission >= 24;
+        }
+
+        // Check on page load
+        if (!canSubmitSuggestion()) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            rateLimitMessage.classList.remove('hidden');
+        }
+
+        suggestionForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Hide all messages
+            rateLimitMessage.classList.add('hidden');
+            successMessage.classList.add('hidden');
+            errorMessage.classList.add('hidden');
+            
+            // Check rate limit
+            if (!canSubmitSuggestion()) {
+                rateLimitMessage.classList.remove('hidden');
+                return;
+            }
+            
+            const suggestion = suggestionInput.value.trim();
+            if (!suggestion) return;
+            
+            // Disable button during submission
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+            
+            try {
+                const response = await fetch('logic/submit_suggestion.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ suggestion: suggestion })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Store submission timestamp
+                    localStorage.setItem('lastSuggestionSubmission', new Date().toISOString());
+                    
+                    // Show success message
+                    successMessage.classList.remove('hidden');
+                    suggestionInput.value = '';
+                    
+                    // Disable form
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    rateLimitMessage.classList.remove('hidden');
+                    successMessage.classList.add('hidden');
+                    
+                    setTimeout(() => {
+                        rateLimitMessage.classList.remove('hidden');
+                    }, 3000);
+                } else {
+                    errorMessage.textContent = data.message || 'Something went wrong. Please try again later.';
+                    errorMessage.classList.remove('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Submit Suggestion';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.classList.remove('hidden');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Suggestion';
+            }
         });
     </script>
 </body>

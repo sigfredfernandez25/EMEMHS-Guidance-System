@@ -924,11 +924,26 @@ foreach ($complaints as $complaint) {
                     return;
                 }
 
+                // Validate date and time are not in the past
+                const selectedDate = scheduleDate.value;
+                const selectedTimeStr = selectedTime.textContent;
+                const scheduledDateTime = new Date(selectedDate + ' ' + selectedTimeStr);
+                const now = new Date();
+
+                if (scheduledDateTime <= now) {
+                    alert('Cannot schedule a session in the past. Please select a future date and time.');
+                    return;
+                }
+
+                // Disable button to prevent double submission
+                confirmSchedule.disabled = true;
+                confirmSchedule.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Scheduling...';
+
                 try {
                     const formData = new FormData();
                     formData.append('complaint_id', selectedComplaintId.value);
-                    formData.append('scheduled_date', scheduleDate.value);
-                    formData.append('scheduled_time', selectedTime.textContent);
+                    formData.append('scheduled_date', selectedDate);
+                    formData.append('scheduled_time', selectedTimeStr);
                     
                     const response = await fetch('set-schedule.php', {
                         method: 'POST',
@@ -979,13 +994,20 @@ EMEMHS Guidance Office`;
                         } catch (emailError) {
                             console.error('Error sending email:', emailError);
                             alert('Schedule set but failed to send notification. Please try again.');
+                            window.location.reload();
                         }
                     } else {
-                        alert('Error setting schedule: ' + (data.error || 'Unknown error'));
+                        alert('Error: ' + (data.error || 'Unknown error'));
+                        // Re-enable button on error
+                        confirmSchedule.disabled = false;
+                        confirmSchedule.innerHTML = 'Confirm Schedule';
                     }
                 } catch (error) {
                     console.error('Error setting schedule:', error);
-                    alert('Error setting schedule. Please try again. If the problem persists, contact the administrator.');
+                    alert('Error setting schedule. Please try again.');
+                    // Re-enable button on error
+                    confirmSchedule.disabled = false;
+                    confirmSchedule.innerHTML = 'Confirm Schedule';
                 }
             });
 

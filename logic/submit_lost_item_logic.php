@@ -2,6 +2,7 @@
 require_once 'sql_querries.php';
 require_once 'db_connection.php';
 require_once 'notification_logic.php';
+require_once 'activity_logger.php';
 session_start();
 
 $date = date('Y-m-d');
@@ -109,6 +110,15 @@ try {
 
         // Get the last inserted item ID
         $item_id = $pdo->lastInsertId();
+
+        // Log activity
+        logActivity(
+            'lost_item',
+            $item_id,
+            'reported',
+            "Lost item reported: $itemName ($finalCategory)",
+            $_SESSION['user']
+        );
 
         // Get the student's name
         $stmt = $pdo->prepare("SELECT first_name, last_name FROM students WHERE id = ?");

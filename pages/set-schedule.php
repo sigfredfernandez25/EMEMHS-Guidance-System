@@ -43,12 +43,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     try {
-        // Check if complaint exists
-        $stmt = $pdo->prepare("SELECT id FROM " . TBL_COMPLAINTS_CONCERNS . " WHERE id = ?");
+        // Validate date and time are not in the past
+        $scheduledDateTime = strtotime($scheduled_date . ' ' . $scheduled_time);
+        $currentDateTime = time();
+        
+        if ($scheduledDateTime <= $currentDateTime) {
+            error_log("Attempted to schedule in the past - Scheduled: $scheduled_date $scheduled_time");
+            sendJsonResponse(false, [], 'Cannot schedule a session in the past. Please select a future date and time.');
+        }
+
+        // Check if complaint exists and is not already scheduled (prevent duplicates)
+        $stmt = $pdo->prepare("SELECT id, status FROM " . TBL_COMPLAINTS_CONCERNS . " WHERE id = ?");
         $stmt->execute([$complaint_id]);
-        if (!$stmt->fetch()) {
+        $complaint = $stmt->fetch();
+        
+        if (!$complaint) {
             error_log("Complaint not found - ID: $complaint_id");
             sendJsonResponse(false, [], 'Complaint not found');
+        }
+        
+        if ($complaint['status'] === 'scheduled') {
+            error_log("Complaint already scheduled - ID: $complaint_id");
+            sendJsonResponse(false, [], 'This complaint has already been scheduled. Please refresh the page.');
         }
 
         // Update scheduled date and time

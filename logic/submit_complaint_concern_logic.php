@@ -111,22 +111,15 @@ try {
             $url = "https://api.semaphore.co/api/v4/messages";
 
             $severity_text = match($severity) {
-                'low' => ' (Low Priority)',
-                'medium' => ' (Medium Priority)',
-                'high' => ' (High Priority)',
-                'urgent' => ' (URGENT)',
-                default => ' (Medium Priority)',
+                'low' => 'Low',
+                'medium' => 'Med',
+                'high' => 'High',
+                'urgent' => 'URGENT',
+                default => 'Med',
             };
 
-            $message = "EMEMHS EDUCARE GUIDANCE SYSTEM\n\n";
-            $message .= "Dear $parent_name,\n\n";
-            $message .= "This is to inform you that your child has submitted a new ";
-            $message .= str_replace('_', ' ', ucwords($insertType)) . " concern";
-            $message .= $severity_text . " to our Counseling Office.\n\n";
-            $message .= "Our guidance counselors will review this matter and contact you within 1-2 business days.\n\n";
-            $message .= "If this is an urgent matter requiring immediate attention, please contact the school directly.\n\n";
-            $message .= "Thank you.\n\n";
-            $message .= "EMEMHS Guidance Department\nContact: (02) 123-4567";
+            // Short and direct message to save SMS credits
+            $message = "EMEMHS: Your child submitted a " . str_replace('_', ' ', $insertType) . " concern ($severity_text priority). Guidance will contact you within 1-2 days. For urgent matters, call school directly.";
 
             $data = [
                 "apikey" => $apiKey,
@@ -135,17 +128,48 @@ try {
                 "sendername" => $senderName
             ];
 
-            // Check if curl_init exists before using it
+            // Try cURL first, fallback to file_get_contents
+            $smsSuccess = false;
+            
             if (function_exists('curl_init')) {
                 $ch = curl_init($url);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
                 curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
                 curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
-                curl_exec($ch);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 curl_close($ch);
+
+                if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
+                    $smsSuccess = true;
+                }
+            }
+            
+            // Fallback to file_get_contents if cURL failed
+            if (!$smsSuccess) {
+                $options = [
+                    'http' => [
+                        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                        'method'  => 'POST',
+                        'content' => http_build_query($data),
+                        'timeout' => 30
+                    ]
+                ];
+                
+                $context = stream_context_create($options);
+                $response = @file_get_contents($url, false, $context);
+                
+                if ($response !== false) {
+                    $smsSuccess = true;
+                }
+            }
+            
+            if ($smsSuccess) {
+                error_log("Parent SMS notification sent successfully");
             } else {
-                error_log("cURL is not enabled. Cannot send SMS notification.");
+                error_log("Failed to send parent SMS notification");
             }
         }
     }

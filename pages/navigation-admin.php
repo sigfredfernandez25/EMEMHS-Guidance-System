@@ -21,6 +21,21 @@ function getPendingRescheduleRequestsCount()
         return 0;
     }
 }
+
+// Function to get unread suggestions count
+function getUnreadSuggestionsCount()
+{
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM anonymous_suggestions WHERE is_read = 0");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'];
+    } catch (PDOException $e) {
+        error_log("Error getting unread suggestions count: " . $e->getMessage());
+        return 0;
+    }
+}
 ?>
 
 <!-- Sidebar -->
@@ -99,14 +114,14 @@ function getPendingRescheduleRequestsCount()
                 <span class="sidebar-tooltip">Reschedule Requests</span>
             </a>
 
-            <a href="found-items.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'found-items.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Found Items">
+            <a href="admin-lost-items.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'admin-lost-items.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Lost Items">
                 <span class="icon-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                 </span>
-                <span class="truncate text-sm">Found Items</span>
-                <span class="sidebar-tooltip">Found Items</span>
+                <span class="truncate text-sm">Lost Items</span>
+                <span class="sidebar-tooltip">Lost Items</span>
             </a>
 
             <a href="students-list.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'students-list.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Students">
@@ -117,6 +132,26 @@ function getPendingRescheduleRequestsCount()
                 </span>
                 <span class="truncate text-sm">Students</span>
                 <span class="sidebar-tooltip">Students</span>
+            </a>
+
+            <a href="admin-suggestions.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'admin-suggestions.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Suggestions">
+                <span class="icon-center relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    <?php
+                    if ($isLoggedIn) {
+                        $unread_suggestions_count = getUnreadSuggestionsCount();
+                        if ($unread_suggestions_count > 0):
+                    ?>
+                            <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"><?php echo $unread_suggestions_count; ?></span>
+                    <?php
+                        endif;
+                    }
+                    ?>
+                </span>
+                <span class="truncate text-sm">Suggestions</span>
+                <span class="sidebar-tooltip">Suggestions</span>
             </a>
 
             <div class="border-t border-gray-200 my-4"></div>

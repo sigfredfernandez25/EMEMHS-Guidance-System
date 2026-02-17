@@ -797,8 +797,8 @@ $unread_count = getUnreadNotificationsCount($_SESSION['user']);
                     <a href="complaint-concern-admin.php" class="minimal-btn px-4 py-2 rounded-lg flex items-center hover:bg-[#800000] hover:text-white transition-all duration-300">
                         <i class="fas fa-clipboard-list mr-2"></i>View Complaints
                     </a>
-                    <a href="found-items.php" class="minimal-btn px-4 py-2 rounded-lg flex items-center hover:bg-[#800000] hover:text-white transition-all duration-300">
-                        <i class="fas fa-box mr-2"></i>View Found Items
+                    <a href="admin-lost-items.php" class="minimal-btn px-4 py-2 rounded-lg flex items-center hover:bg-[#800000] hover:text-white transition-all duration-300">
+                        <i class="fas fa-box mr-2"></i>View Lost Items
                     </a>
                     <a href="students-list.php" class="minimal-btn px-4 py-2 rounded-lg flex items-center hover:bg-[#800000] hover:text-white transition-all duration-300">
                         <i class="fas fa-users mr-2"></i>View Students

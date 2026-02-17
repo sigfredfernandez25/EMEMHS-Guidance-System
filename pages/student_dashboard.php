@@ -362,6 +362,77 @@ $found_lost_items = $stmt->fetchColumn();
 
         <!-- Mobile-First Content Sections -->
         <div class="space-y-6">
+            <!-- Smart Matching Section -->
+            <?php
+            require_once '../logic/smart_matching.php';
+            $matches = getMatchesForDashboard($student_id);
+            if (!empty($matches)):
+            ?>
+            <div class="dashboard-card p-4 sm:p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-6 h-6 text-[#800000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                        <h2 class="text-lg font-semibold text-gray-900">Possible Matches for Your Lost Items</h2>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <?php foreach (array_slice($matches, 0, 3) as $match): ?>
+                        <div class="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                            <?php if ($match['is_high_match']): ?>
+                                <div class="bg-green-500 text-white text-xs font-bold px-3 py-1 text-center">
+                                    <?php echo round($match['match_score']); ?>% Match!
+                                </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($match['photo']) && !empty($match['mime_type'])): ?>
+                                <img src="data:<?php echo $match['mime_type']; ?>;base64,<?php echo base64_encode($match['photo']); ?>"
+                                     alt="<?php echo htmlspecialchars($match['item_name']); ?>"
+                                     class="w-full h-40 object-cover">
+                            <?php else: ?>
+                                <div class="w-full h-40 bg-gray-100 flex items-center justify-center">
+                                    <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div class="p-4">
+                                <div class="flex items-start justify-between mb-2">
+                                    <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($match['item_name']); ?></h3>
+                                    <span class="text-sm font-medium text-[#800000]"><?php echo round($match['match_score']); ?>%</span>
+                                </div>
+                                
+                                <p class="text-sm text-gray-600 mb-2"><?php echo htmlspecialchars($match['category']); ?></p>
+                                
+                                <div class="bg-blue-50 p-2 rounded text-xs mb-3">
+                                    <div class="font-semibold text-blue-900 mb-1">Why this matches:</div>
+                                    <?php foreach (array_slice($match['reasons'], 0, 3) as $reason): ?>
+                                        <div class="text-blue-700">• <?php echo htmlspecialchars($reason); ?></div>
+                                    <?php endforeach; ?>
+                                </div>
+                                
+                                <a href="view-lost-item.php?id=<?php echo $match['id']; ?>" 
+                                   class="block w-full text-center bg-[#800000] text-white px-4 py-2 rounded-lg hover:bg-[#600000] transition-colors text-sm font-medium">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                
+                <?php if (count($matches) > 3): ?>
+                    <div class="mt-4 text-center">
+                        <a href="lost_item.php#matches" class="text-[#800000] font-medium hover:underline">
+                            View all <?php echo count($matches); ?> matches →
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
+
             <!-- Recent Activity Section -->
             <div class="dashboard-card p-4 sm:p-6">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4">
@@ -505,19 +576,21 @@ $found_lost_items = $stmt->fetchColumn();
                             <span class="text-gray-700 font-medium">Reschedule Request</span>
                         </a>
                         
-                        <a href="found-items.php" class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors touch-target">
+                        <a href="admin-lost-items.php" class="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors touch-target">
                             <div class="p-2 bg-gray-100 rounded-lg mr-3">
                                 <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                 </svg>
                             </div>
-                            <span class="text-gray-700 font-medium">Found Items</span>
+                            <span class="text-gray-700 font-medium">Lost Items</span>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
     </main>
+
+    <?php include 'components/fab.php'; ?>
 
 </body>
 

@@ -58,6 +58,7 @@ class AdminSMSNotifications {
 
     /**
      * Send SMS using Semaphore API
+     * Tries cURL first, falls back to file_get_contents if cURL fails
      */
     private function sendSMS($recipients, $message) {
         try {
@@ -71,18 +72,42 @@ class AdminSMSNotifications {
                 "sendername" => $this->senderName
             ];
 
-            $ch = curl_init($this->apiUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-            curl_setopt($ch, CURLOPT_POST, true);
+            // Try cURL first
+            if (function_exists('curl_init')) {
+                $ch = curl_init($this->apiUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
 
-            curl_close($ch);
+                // If cURL succeeded
+                if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
+                    return true;
+                }
+                
+                // cURL failed, try fallback
+                error_log("cURL failed, falling back to file_get_contents");
+            }
 
-            if ($response === false || $httpCode >= 400) {
-                error_log("Failed to send SMS. HTTP Code: $httpCode, Response: $response");
+            // Fallback to file_get_contents
+            $options = [
+                'http' => [
+                    'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                    'method'  => 'POST',
+                    'content' => http_build_query($data),
+                    'timeout' => 30
+                ]
+            ];
+            
+            $context = stream_context_create($options);
+            $response = @file_get_contents($this->apiUrl, false, $context);
+            
+            if ($response === false) {
+                error_log("Failed to send SMS via both methods");
                 return false;
             }
 

@@ -12,6 +12,7 @@ class StudentSMSNotifications {
 
     /**
      * Send SMS using Semaphore API
+     * Tries cURL first, falls back to file_get_contents if cURL fails
      */
     private function sendSMS($phoneNumber, $message) {
         try {
@@ -22,22 +23,59 @@ class StudentSMSNotifications {
                 "sendername" => $this->senderName
             ];
 
-            $ch = curl_init($this->apiUrl);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-            curl_setopt($ch, CURLOPT_POST, true);
+            error_log("Attempting to send SMS to: " . $phoneNumber);
 
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            // Try cURL first
+            if (function_exists('curl_init')) {
+                error_log("Trying cURL method...");
+                
+                $ch = curl_init($this->apiUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
-            curl_close($ch);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                $curlError = curl_error($ch);
+                curl_close($ch);
 
-            if ($response === false || $httpCode >= 400) {
-                error_log("Failed to send SMS. HTTP Code: $httpCode, Response: $response");
-                return false;
+                // If cURL succeeded
+                if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
+                    error_log("SMS sent successfully via cURL! HTTP Code: $httpCode");
+                    error_log("Response: " . $response);
+                    return true;
+                }
+                
+                // cURL failed, log the error and try fallback
+                error_log("cURL failed - HTTP Code: $httpCode, Error: " . $curlError);
+                error_log("Falling back to file_get_contents...");
+            } else {
+                error_log("cURL not available, using file_get_contents...");
             }
 
+            // Fallback to file_get_contents
+            $options = [
+                'http' => [
+                    'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                    'method'  => 'POST',
+                    'content' => http_build_query($data),
+                    'timeout' => 30
+                ]
+            ];
+            
+            $context = stream_context_create($options);
+            $response = @file_get_contents($this->apiUrl, false, $context);
+            
+            if ($response === false) {
+                error_log("file_get_contents also failed!");
+                return false;
+            }
+            
+            error_log("SMS sent successfully via file_get_contents!");
+            error_log("Response: " . $response);
             return true;
+
         } catch (Exception $e) {
             error_log("Error sending SMS: " . $e->getMessage());
             return false;
@@ -49,6 +87,8 @@ class StudentSMSNotifications {
      */
     public function notifyItemFound($itemId) {
         try {
+            error_log("=== Starting notifyItemFound for item ID: $itemId ===");
+            
             // Database connection parameters
             $servername = "localhost";
             $dbUsername = "root";
@@ -74,41 +114,67 @@ class StudentSMSNotifications {
                 return ['success' => false, 'message' => 'Item not found'];
             }
 
+            error_log("Item found: " . $item['item_name']);
+            error_log("receive_sms: " . ($item['receive_sms'] ?? 'NULL'));
+            error_log("phone_number: " . ($item['phone_number'] ?? 'NULL'));
+
             // Check if student opted in for SMS and has phone number
             if (!$item['receive_sms'] || empty($item['phone_number'])) {
+                error_log("Student did not opt-in for SMS or no phone number provided");
                 return ['success' => false, 'message' => 'Student did not opt-in for SMS or no phone number provided'];
             }
 
             $studentName = $item['first_name'] . ' ' . $item['last_name'];
             $itemName = $item['item_name'];
+            
+            // Format phone number for Philippine mobile (Semaphore expects 639XXXXXXXXX format)
+            $phoneNumber = $item['phone_number'];
+            $phoneNumber = preg_replace('/[^0-9]/', '', $phoneNumber); // Remove non-numeric characters
+            
+            // Convert to 639XXXXXXXXX format
+            if (strlen($phoneNumber) == 10 && substr($phoneNumber, 0, 1) == '9') {
+                // 9XXXXXXXXX -> 639XXXXXXXXX
+                $phoneNumber = '63' . $phoneNumber;
+            } elseif (strlen($phoneNumber) == 11 && substr($phoneNumber, 0, 2) == '09') {
+                // 09XXXXXXXXX -> 639XXXXXXXXX
+                $phoneNumber = '63' . substr($phoneNumber, 1);
+            } elseif (strlen($phoneNumber) == 12 && substr($phoneNumber, 0, 3) == '639') {
+                // Already in correct format
+                $phoneNumber = $phoneNumber;
+            } else {
+                error_log("Invalid phone number format: " . $item['phone_number']);
+                return ['success' => false, 'message' => 'Invalid phone number format'];
+            }
+            
+            error_log("Formatted phone number: " . $phoneNumber);
 
-            // Compose SMS message
-            $message = "EMEMHS GUIDANCE SYSTEM\n\n";
-            $message .= "Good news, " . $item['first_name'] . "!\n\n";
-            $message .= "Your lost item has been found: " . $itemName . "\n\n";
-            $message .= "Please visit the Guidance Office to claim your item.\n\n";
-            $message .= "Bring a valid ID for verification.\n\n";
-            $message .= "EMEMHS Guidance Department";
+            // Compose SMS message - SHORT AND DIRECT to save costs
+            $message = "EMEMHS: Hi " . $item['first_name'] . "! Your lost " . $itemName . " has been found. Please claim it at the Guidance Office with your ID.";
+
+            error_log("Sending SMS to: " . $phoneNumber);
 
             // Send SMS
-            $success = $this->sendSMS($item['phone_number'], $message);
+            $success = $this->sendSMS($phoneNumber, $message);
 
             if ($success) {
+                error_log("=== SMS sent successfully! ===");
                 return [
                     'success' => true,
                     'message' => 'SMS sent successfully to student',
                     'details' => [
                         'student_name' => $studentName,
                         'item_name' => $itemName,
-                        'phone_number' => $item['phone_number']
+                        'phone_number' => $phoneNumber
                     ]
                 ];
             } else {
+                error_log("=== SMS sending failed ===");
                 return ['success' => false, 'message' => 'Failed to send SMS'];
             }
 
         } catch (Exception $e) {
             error_log("Error in notifyItemFound: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }

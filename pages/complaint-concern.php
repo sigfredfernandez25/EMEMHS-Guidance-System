@@ -197,6 +197,9 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
     </main>
+
+    <?php include 'components/fab.php'; ?>
+
 </body>
 
 </html>
