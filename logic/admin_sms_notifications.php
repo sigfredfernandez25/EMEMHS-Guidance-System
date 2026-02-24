@@ -25,19 +25,26 @@ class AdminSMSNotifications {
     }
 
     /**
+     * Get database connection using centralized config
+     * @return PDO
+     */
+    private function getDbConnection() {
+        $dbConfig = getDatabaseConfig();
+        $pdo = new PDO(
+            "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}",
+            $dbConfig['username'],
+            $dbConfig['password']
+        );
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        return $pdo;
+    }
+
+    /**
      * Get admin contact number from database
      */
     public function getAdminContactNumber() {
         try {
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
-
-            // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo = $this->getDbConnection();
 
             // Get admin user with contact information
             $stmt = $pdo->prepare("
@@ -134,15 +141,7 @@ class AdminSMSNotifications {
      */
     public function sendDailyReminder() {
         try {
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
-
-            // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo = $this->getDbConnection();
 
             // Get pending complaints that are not scheduled
             $stmt = $pdo->prepare("
@@ -241,15 +240,7 @@ class AdminSMSNotifications {
      */
     public function sendSessionNotification() {
         try {
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
-
-            // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo = $this->getDbConnection();
 
             $today = date('Y-m-d');
 
@@ -334,15 +325,7 @@ class AdminSMSNotifications {
      */
     public function sendUrgentNotification($complaintId) {
         try {
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
-
-            // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $pdo = $this->getDbConnection();
 
             // Get complaint details
             $stmt = $pdo->prepare("
@@ -599,14 +582,12 @@ class AutomaticSMSChecker {
      */
     private function checkDailyReminderConditions($adminSMS) {
         try {
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
-
-            // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
+            $dbConfig = getDatabaseConfig();
+            $pdo = new PDO(
+                "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}",
+                $dbConfig['username'],
+                $dbConfig['password']
+            );
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Get pending complaints that are not scheduled
@@ -650,14 +631,12 @@ class AutomaticSMSChecker {
      */
     private function checkSessionConditions($adminSMS) {
         try {
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
-
-            // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
+            $dbConfig = getDatabaseConfig();
+            $pdo = new PDO(
+                "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}",
+                $dbConfig['username'],
+                $dbConfig['password']
+            );
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             $today = date('Y-m-d');
@@ -694,14 +673,12 @@ class AutomaticSMSChecker {
      */
     private function checkUrgentConditions($adminSMS) {
         try {
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
-
-            // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
+            $dbConfig = getDatabaseConfig();
+            $pdo = new PDO(
+                "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}",
+                $dbConfig['username'],
+                $dbConfig['password']
+            );
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Get urgent/high priority complaints that haven't been notified yet

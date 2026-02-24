@@ -99,14 +99,15 @@ class StudentSMSNotifications {
         try {
             error_log("=== Starting notifyItemFound for item ID: $itemId ===");
             
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
+            // Get database configuration
+            $dbConfig = getDatabaseConfig();
 
             // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
+            $pdo = new PDO(
+                "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}",
+                $dbConfig['username'],
+                $dbConfig['password']
+            );
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Get lost item details with student information
@@ -194,14 +195,15 @@ class StudentSMSNotifications {
      */
     public function notifyScheduledSession($complaintId) {
         try {
-            // Database connection parameters
-            $servername = "localhost";
-            $dbUsername = "root";
-            $dbPassword = "";
-            $dbname = "guidancesystem";
+            // Get database configuration
+            $dbConfig = getDatabaseConfig();
 
             // Create PDO connection
-            $pdo = new PDO("mysql:host=$servername;dbname=$dbname;charset=utf8", $dbUsername, $dbPassword);
+            $pdo = new PDO(
+                "mysql:host={$dbConfig['host']};dbname={$dbConfig['database']};charset={$dbConfig['charset']}",
+                $dbConfig['username'],
+                $dbConfig['password']
+            );
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
             // Get complaint details with student information
