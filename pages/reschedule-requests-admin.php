@@ -67,6 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt_user->execute([$request['student_id']]);
                 $student_user = $stmt_user->fetch(PDO::FETCH_ASSOC);
                 
+                // Get student email
+                $stmt_email = $pdo->prepare("SELECT u.email, s.first_name, s.last_name FROM " . TBL_STUDENTS . " s JOIN " . TBL_USERS . " u ON s.user_id = u.id WHERE s.id = ?");
+                $stmt_email->execute([$request['student_id']]);
+                $student_info = $stmt_email->fetch(PDO::FETCH_ASSOC);
+                
                 if ($student_user) {
                     // Notify student
                     $message = "Your reschedule request has been approved. New schedule: " . 
@@ -75,6 +80,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     
                     createNotification($student_user['user_id'], $request['complaint_id'], 'complaint', 'rescheduled', $message);
                 }
+                
+                // Store email data in session for JavaScript to send
+                $_SESSION['send_email'] = [
+                    'type' => 'approved',
+                    'email' => $student_info['email'],
+                    'student_name' => $student_info['first_name'] . ' ' . $student_info['last_name'],
+                    'new_date' => date('F j, Y', strtotime($request['preferred_date'])),
+                    'new_time' => date('g:i A', strtotime($request['preferred_time'])),
+                    'admin_response' => $admin_response
+                ];
                 
                 $success_message = "Reschedule request approved successfully.";
             }
@@ -88,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$admin_response, $_SESSION['user'], $request_id]);
             
             // Get student info for notification
-            $stmt = $pdo->prepare("SELECT rr.student_id, rr.complaint_id, s.user_id FROM reschedule_requests rr JOIN " . TBL_STUDENTS . " s ON rr.student_id = s.id WHERE rr.id = ?");
+            $stmt = $pdo->prepare("SELECT rr.student_id, rr.complaint_id, s.user_id, s.first_name, s.last_name, u.email FROM reschedule_requests rr JOIN " . TBL_STUDENTS . " s ON rr.student_id = s.id JOIN " . TBL_USERS . " u ON s.user_id = u.id WHERE rr.id = ?");
             $stmt->execute([$request_id]);
             $request = $stmt->fetch(PDO::FETCH_ASSOC);
             
@@ -96,6 +111,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Notify student
                 $message = "Your reschedule request has been rejected. Reason: " . $admin_response;
                 createNotification($request['user_id'], $request['complaint_id'], 'complaint', 'reschedule_rejected', $message);
+                
+                // Store email data in session for JavaScript to send
+                $_SESSION['send_email'] = [
+                    'type' => 'rejected',
+                    'email' => $request['email'],
+                    'student_name' => $request['first_name'] . ' ' . $request['last_name'],
+                    'admin_response' => $admin_response
+                ];
             }
             
             $success_message = "Reschedule request rejected.";
@@ -120,6 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <script>emailjs.init("GRi35_90k4gj9Es_f");</script>
     <style>
         :root {
             --primary-color: #800000;
@@ -360,6 +385,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 
 <script>
+    // Send email notification if needed
+    <?php if (isset($_SESSION['send_email'])): ?>
+        const emailData = <?= json_encode($_SESSION['send_email']) ?>;
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            if (emailData.type === 'approved') {
+                const approvedMessage = `
+Dear ${emailData.student_name},
+
+Good news! Your reschedule request has been APPROVED.
+
+New Schedule Details:
+- Date: ${emailData.new_date}
+- Time: ${emailData.new_time}
+
+${emailData.admin_response ? 'Admin Response:\n' + emailData.admin_response + '\n\n' : ''}
+Please make sure to attend your counseling session at the new scheduled time. If you have any questions or need further assistance, please contact the guidance office.
+
+Best regards,
+EMEMHS Guidance Office`;
+
+                emailjs.send('service_8jh4949', 'template_gr1vonw', {
+                    sendername: 'EMEMHS Guidance System',
+                    to: emailData.email,
+                    subject: 'Reschedule Request Approved - EMEMHS Guidance',
+                    replyto: 'noreply@ememhs.edu.ph',
+                    message: approvedMessage
+                }).then(function(response) {
+                    console.log('Approval email sent successfully:', response);
+                }, function(error) {
+                    console.error('Failed to send approval email:', error);
+                });
+            } else if (emailData.type === 'rejected') {
+                const rejectedMessage = `
+Dear ${emailData.student_name},
+
+We regret to inform you that your reschedule request has been REJECTED.
+
+Reason:
+${emailData.admin_response}
+
+Your original schedule remains unchanged. Please attend your counseling session at the originally scheduled time.
+
+If you have any questions or concerns about this decision, please contact the guidance office directly.
+
+Best regards,
+EMEMHS Guidance Office`;
+
+                emailjs.send('service_8jh4949', 'template_gr1vonw', {
+                    sendername: 'EMEMHS Guidance System',
+                    to: emailData.email,
+                    subject: 'Reschedule Request Update - EMEMHS Guidance',
+                    replyto: 'noreply@ememhs.edu.ph',
+                    message: rejectedMessage
+                }).then(function(response) {
+                    console.log('Rejection email sent successfully:', response);
+                }, function(error) {
+                    console.error('Failed to send rejection email:', error);
+                });
+            }
+        });
+        
+        <?php unset($_SESSION['send_email']); ?>
+    <?php endif; ?>
+
     function openResponseModal(requestId, action) {
         document.getElementById('request_id').value = requestId;
         document.getElementById('action').value = action;

@@ -209,15 +209,19 @@ if (isset($_POST['user'])) {
                         <input type="checkbox" name="receive_sms" id="receive_sms"
                                <?= isset($item['receive_sms']) && $item['receive_sms'] ? 'checked' : '' ?>>
                         <label for="receive_sms" class="text-sm font-medium text-gray-700">
-                            I want to receive SMS updates
+                            I want to receive SMS updates when this item is found
                         </label>
                     </div>
 
                     <div class="space-y-2" id="phone_number_group" style="display: none;">
-                        <label for="phone_number" class="block text-sm font-medium text-gray-700">Phone Number (optional)</label>
+                        <label for="phone_number" class="block text-sm font-medium text-gray-700">
+                            Phone Number (optional - uses your profile number if not provided)
+                        </label>
                         <input type="text" name="phone_number" id="phone_number"
+                               placeholder="09XXXXXXXXX"
                                value="<?= htmlspecialchars($item['phone_number'] ?? '') ?>"
                                class="form-input w-full px-4 py-2 rounded-lg focus:outline-none">
+                        <p class="text-xs text-gray-500">Format: 09XXXXXXXXX (11 digits)</p>
                     </div>
                 </div>
 

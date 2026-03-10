@@ -18,6 +18,9 @@ class StudentSMSNotifications {
         $this->apiKey = $config['api_key'];
         $this->senderName = $config['sender_name'];
         $this->apiUrl = $config['api_url'];
+        
+        // Log configuration status (without exposing the actual API key)
+        error_log("SMS Configuration loaded - API Key present: " . (!empty($this->apiKey) && $this->apiKey !== 'YOUR_SEMAPHORE_API_KEY_HERE' ? 'YES' : 'NO'));
     }
 
     /**
@@ -126,20 +129,33 @@ class StudentSMSNotifications {
             }
 
             error_log("Item found: " . $item['item_name']);
-            error_log("receive_sms: " . ($item['receive_sms'] ?? 'NULL'));
+            error_log("receive_sms value: " . ($item['receive_sms'] ?? 'NULL'));
+            error_log("receive_sms type: " . gettype($item['receive_sms']));
             error_log("phone_number: " . ($item['phone_number'] ?? 'NULL'));
 
             // Check if student opted in for SMS and has phone number
-            if (!$item['receive_sms'] || empty($item['phone_number'])) {
-                error_log("Student did not opt-in for SMS or no phone number provided");
-                return ['success' => false, 'message' => 'Student did not opt-in for SMS or no phone number provided'];
+            // Handle both integer and string values (database stores as varchar)
+            $receiveSmsEnabled = ($item['receive_sms'] == 1 || $item['receive_sms'] === '1' || $item['receive_sms'] === true);
+            
+            if (!$receiveSmsEnabled) {
+                error_log("Student did not opt-in for SMS (receive_sms: {$item['receive_sms']})");
+                return ['success' => false, 'message' => 'Student did not opt-in for SMS'];
+            }
+
+            // Use phone number from lost item form, or fallback to student's profile phone number
+            $phoneNumber = !empty($item['phone_number']) ? $item['phone_number'] : $item['student_phone'];
+            
+            if (empty($phoneNumber)) {
+                error_log("No phone number available - neither in lost item nor student profile");
+                return ['success' => false, 'message' => 'No phone number available for SMS'];
             }
 
             $studentName = $item['first_name'] . ' ' . $item['last_name'];
             $itemName = $item['item_name'];
             
+            error_log("Using phone number: " . $phoneNumber . " (from " . (!empty($item['phone_number']) ? "lost item form" : "student profile") . ")");
+            
             // Format phone number for Philippine mobile (Semaphore expects 639XXXXXXXXX format)
-            $phoneNumber = $item['phone_number'];
             $phoneNumber = preg_replace('/[^0-9]/', '', $phoneNumber); // Remove non-numeric characters
             
             // Convert to 639XXXXXXXXX format
@@ -153,8 +169,8 @@ class StudentSMSNotifications {
                 // Already in correct format
                 $phoneNumber = $phoneNumber;
             } else {
-                error_log("Invalid phone number format: " . $item['phone_number']);
-                return ['success' => false, 'message' => 'Invalid phone number format'];
+                error_log("Invalid phone number format: " . $phoneNumber);
+                return ['success' => false, 'message' => 'Invalid phone number format: ' . $phoneNumber];
             }
             
             error_log("Formatted phone number: " . $phoneNumber);
@@ -162,6 +178,7 @@ class StudentSMSNotifications {
             // Compose SMS message - SHORT AND DIRECT to save costs
             $message = "EMEMHS: Hi " . $item['first_name'] . "! Your lost " . $itemName . " has been found. Please claim it at the Guidance Office with your ID.";
 
+            error_log("SMS Message: " . $message);
             error_log("Sending SMS to: " . $phoneNumber);
 
             // Send SMS

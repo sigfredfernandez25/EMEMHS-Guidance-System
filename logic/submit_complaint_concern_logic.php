@@ -1,9 +1,14 @@
 <?php
-require_once 'config.php';
-require_once 'sql_querries.php';
-require_once 'db_connection.php';
-require_once 'notification_logic.php';
-session_start();
+// Use absolute paths to avoid issues on shared hosting
+require_once __DIR__ . '/../config.php';
+require_once __DIR__ . '/sql_querries.php';
+require_once __DIR__ . '/db_connection.php';
+require_once __DIR__ . '/notification_logic.php';
+
+// Start session only if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Get Semaphore configuration from config file
 $semaphoreConfig = getSemaphoreConfig();
@@ -12,6 +17,11 @@ $date = date('Y-m-d');
 $time = date('H:i:s');
 
 try {
+    // Validate POST data exists
+    if (!isset($_POST['isUpdate']) || !isset($_POST['complaint_type']) || !isset($_POST['description'])) {
+        throw new Exception("Missing required form data");
+    }
+
     $transacType = "insert";
     $queryUse = SQL_INSERT_COMPLAINTS_CONCERNS;
     if ($_POST['isUpdate'] != "0") {
@@ -22,9 +32,9 @@ try {
     $rowId = $_POST['isUpdate'];
     $type = $_POST['complaint_type'];
     $severity = $_POST['severity'] ?? 'medium';
-    $other = $_POST['other_specify'];
+    $other = $_POST['other_specify'] ?? '';
     $description = $_POST['description']; // <-- text from typing or voice recognition
-    $counselingDate = $_POST['counseling_date'];
+    $counselingDate = $_POST['counseling_date'] ?? null;
 
     $insertType = $type;
     if ($type === "others" && $other) {
@@ -132,48 +142,46 @@ try {
                 "sendername" => $senderName
             ];
 
-            // Try cURL first, fallback to file_get_contents
+            // Try cURL first (most reliable on shared hosting)
             $smsSuccess = false;
+            $smsError = '';
             
             if (function_exists('curl_init')) {
-                $ch = curl_init($url);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+                try {
+                    $ch = curl_init($url);
+                    if ($ch === false) {
+                        throw new Exception("cURL initialization failed");
+                    }
+                    
+                    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+                    curl_setopt($ch, CURLOPT_POST, true);
+                    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Reduced timeout for shared hosting
+                    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+                    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
 
-                $response = curl_exec($ch);
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                curl_close($ch);
+                    $response = curl_exec($ch);
+                    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                    $curlError = curl_error($ch);
+                    curl_close($ch);
 
-                if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
-                    $smsSuccess = true;
+                    if ($response !== false && $httpCode >= 200 && $httpCode < 300) {
+                        $smsSuccess = true;
+                    } else {
+                        $smsError = "cURL failed: HTTP $httpCode - $curlError";
+                    }
+                } catch (Exception $e) {
+                    $smsError = "cURL exception: " . $e->getMessage();
                 }
+            } else {
+                $smsError = "cURL not available on this server";
             }
             
-            // Fallback to file_get_contents if cURL failed
-            if (!$smsSuccess) {
-                $options = [
-                    'http' => [
-                        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                        'method'  => 'POST',
-                        'content' => http_build_query($data),
-                        'timeout' => 30
-                    ]
-                ];
-                
-                $context = stream_context_create($options);
-                $response = @file_get_contents($url, false, $context);
-                
-                if ($response !== false) {
-                    $smsSuccess = true;
-                }
-            }
-            
+            // Log SMS result (don't fail the complaint submission if SMS fails)
             if ($smsSuccess) {
                 error_log("Parent SMS notification sent successfully");
             } else {
-                error_log("Failed to send parent SMS notification");
+                error_log("SMS notification failed: $smsError");
             }
         }
     }
@@ -186,12 +194,18 @@ try {
     </script>";
     exit();
 } catch (Exception $e) {
-    if ($pdo->inTransaction()) {
+    if (isset($pdo) && $pdo->inTransaction()) {
         $pdo->rollBack();
     }
 
-    echo json_encode([
-        'status' => 'error',
-        'message' => $e->getMessage()
-    ]);
+    // Log the error for debugging
+    error_log("Complaint submission error: " . $e->getMessage());
+    error_log("Stack trace: " . $e->getTraceAsString());
+
+    // Return user-friendly error
+    echo "<script>
+        alert('Error submitting complaint: " . addslashes($e->getMessage()) . "');
+        window.history.back();
+    </script>";
+    exit();
 }

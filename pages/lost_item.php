@@ -433,6 +433,7 @@ try {
                                         Found ✅
                                     </span>
                                 <?php endif; ?>
+                            </div>
 
                             <!-- Hover Overlay -->
                             <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
