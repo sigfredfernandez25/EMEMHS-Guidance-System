@@ -86,12 +86,37 @@ define(
 // SQL Query Constants for Students Registration
 define(
     'SQL_CHECK_EMAIL_EXISTS',
-    "SELECT email FROM " . TBL_STUDENTS . " WHERE email = ?"
+    "SELECT email FROM " . TBL_USERS . " WHERE email = ?"
 );
 
 define(
     'SQL_CHECK_STUDENT_ID_EXISTS',
     "SELECT student_id FROM " . TBL_STUDENTS . " WHERE student_id = ?"
+);
+
+// Submission limit queries
+define(
+    'SQL_COUNT_COMPLAINTS_TODAY',
+    "SELECT COUNT(*) as count FROM " . TBL_COMPLAINTS_CONCERNS . " 
+     WHERE student_id = ? AND DATE(date_created) = CURDATE()"
+);
+
+define(
+    'SQL_COUNT_COMPLAINTS_THIS_MONTH',
+    "SELECT COUNT(*) as count FROM " . TBL_COMPLAINTS_CONCERNS . " 
+     WHERE student_id = ? AND YEAR(date_created) = YEAR(CURDATE()) AND MONTH(date_created) = MONTH(CURDATE())"
+);
+
+define(
+    'SQL_COUNT_LOST_ITEMS_TODAY',
+    "SELECT COUNT(*) as count FROM " . TBL_LOST_ITEMS . " 
+     WHERE student_id = ? AND DATE(date) = CURDATE()"
+);
+
+define(
+    'SQL_COUNT_LOST_ITEMS_THIS_MONTH',
+    "SELECT COUNT(*) as count FROM " . TBL_LOST_ITEMS . " 
+     WHERE student_id = ? AND YEAR(date) = YEAR(CURDATE()) AND MONTH(date) = MONTH(CURDATE())"
 );
 
 define(

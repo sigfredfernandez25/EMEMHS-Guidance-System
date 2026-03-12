@@ -31,6 +31,29 @@ try {
     $receiveSMS = isset($_POST['receive_sms']) ? 1 : 0;
     $phoneNumber = isset($_POST['phone_number']) ? $_POST['phone_number'] : null;
 
+    $student_id = $_SESSION['student_id'];
+
+    // Check submission limits only for new lost items (not updates)
+    if ($transacType == "insert") {
+        // Check daily limit
+        $stmt = $pdo->prepare(SQL_COUNT_LOST_ITEMS_TODAY);
+        $stmt->execute([$student_id]);
+        $todayCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        
+        if ($todayCount >= MAX_LOST_ITEMS_PER_DAY) {
+            throw new Exception("You have reached the maximum number of lost items (" . MAX_LOST_ITEMS_PER_DAY . ") you can report per day. Please try again tomorrow.");
+        }
+
+        // Check monthly limit
+        $stmt = $pdo->prepare(SQL_COUNT_LOST_ITEMS_THIS_MONTH);
+        $stmt->execute([$student_id]);
+        $monthCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        
+        if ($monthCount >= MAX_LOST_ITEMS_PER_MONTH) {
+            throw new Exception("You have reached the maximum number of lost items (" . MAX_LOST_ITEMS_PER_MONTH . ") you can report per month. Please try again next month.");
+        }
+    }
+
     // Handle category
     $finalCategory = $category;
     if ($category === 'others' && $otherCategory) {

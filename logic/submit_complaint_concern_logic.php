@@ -51,6 +51,27 @@ try {
         exit();
     }
 
+    // Check submission limits only for new complaints (not updates)
+    if ($transacType == "insert") {
+        // Check daily limit
+        $stmt = $pdo->prepare(SQL_COUNT_COMPLAINTS_TODAY);
+        $stmt->execute([$student_id]);
+        $todayCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        
+        if ($todayCount >= MAX_COMPLAINTS_PER_DAY) {
+            throw new Exception("You have reached the maximum number of complaints (" . MAX_COMPLAINTS_PER_DAY . ") you can submit per day. Please try again tomorrow.");
+        }
+
+        // Check monthly limit
+        $stmt = $pdo->prepare(SQL_COUNT_COMPLAINTS_THIS_MONTH);
+        $stmt->execute([$student_id]);
+        $monthCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'];
+        
+        if ($monthCount >= MAX_COMPLAINTS_PER_MONTH) {
+            throw new Exception("You have reached the maximum number of complaints (" . MAX_COMPLAINTS_PER_MONTH . ") you can submit per month. Please try again next month.");
+        }
+    }
+
     // Evidence handling (optional, images/docs only)
     $evidence = null;
     $imageType = null;

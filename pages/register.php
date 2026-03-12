@@ -154,10 +154,10 @@
                                     <div>
                                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
                                         <div class="flex gap-2">
-                                            <input type="email" id="email" name="email" oninput="validateEmail()" required
+                                            <input type="email" id="email" name="email" placeholder="your.email@gmail.com" oninput="validateEmail()" required
                                                 class="flex-1 px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
-                                            <button type="button" id="getCode" onclick="executeSendCode()"
-                                                class="btn-primary px-4 py-3 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2 text-sm">
+                                            <button type="button" id="getCode" onclick="executeSendCode()" disabled
+                                                class="btn-primary px-4 py-3 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                                                 Send Code
                                             </button>
                                         </div>
@@ -173,8 +173,9 @@
 
                                     <div>
                                         <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-                                        <input type="tel" id="phone" name="phone" pattern="[0-9]*" maxlength="11" minlength="11" required
+                                        <input type="tel" id="phone" name="phone" pattern="09[0-9]{9}" maxlength="11" placeholder="09XXXXXXXXX" oninput="validatePhoneNumber('phone')" required
                                             class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
+                                        <span id="phone_status" class="text-xs text-red-600 mt-1 block"></span>
                                     </div>
                                 </div>
                             </div>
@@ -194,8 +195,9 @@
 
                                     <div>
                                         <label for="parent_contact" class="block text-sm font-medium text-gray-700 mb-1">Parent/Guardian Contact Number</label>
-                                        <input type="tel" id="parent_contact" name="parent_contact" pattern="[0-9]*" maxlength="11" minlength="11" required
+                                        <input type="tel" id="parent_contact" name="parent_contact" pattern="09[0-9]{9}" maxlength="11" placeholder="09XXXXXXXXX" oninput="validatePhoneNumber('parent_contact')" required
                                             class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
+                                        <span id="parent_contact_status" class="text-xs text-red-600 mt-1 block"></span>
                                     </div>
                                 </div>
                             </div>
@@ -337,19 +339,42 @@
     }
 }
 
+        let emailAvailable = false; // Track if email is available
+
         function validateEmail() {
             const email = document.getElementById('email').value;
+            const emailInput = document.getElementById('email');
             const emailStatus = document.getElementById('email_status');
             const sendCodeButton = document.getElementById('getCode');
             const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
+
+            // Reset email availability flag
+            emailAvailable = false;
+
+            if (!email) {
+                // Empty email
+                emailStatus.innerHTML = '';
+                emailInput.style.border = '1px solid #d1d5db';
+                sendCodeButton.disabled = true;
+                sendCodeButton.textContent = 'Send Code';
+                return;
+            }
 
             if (!gmailRegex.test(email)) {
                 // If email is NOT a valid Gmail address
                 emailStatus.style.color = 'red';
                 emailStatus.innerHTML = 'Please enter a valid Gmail address (example@gmail.com)';
+                emailInput.style.border = '2px solid red';
                 sendCodeButton.disabled = true;
+                sendCodeButton.textContent = 'Send Code';
                 return; // Stop here, don't send AJAX
             }
+
+            // Show checking status
+            emailStatus.style.color = '#6b7280';
+            emailStatus.innerHTML = 'Checking email availability...';
+            emailInput.style.border = '2px solid #6b7280';
+            sendCodeButton.disabled = true;
 
             // Create AJAX request
             const xhr = new XMLHttpRequest();
@@ -359,17 +384,32 @@
             // What to do when response is received
             xhr.onload = function() {
                 if (this.status === 200) {
-                    console.log("this.responseText", this.responseText);
+                    console.log("Email check response:", this.responseText);
                     if (this.responseText === "1") {
-                        document.getElementById('email_status').innerHTML = '';
+                        // Email is available
+                        emailAvailable = true;
+                        emailStatus.style.color = 'green';
+                        emailStatus.innerHTML = '✓ Email is available';
+                        emailInput.style.border = '2px solid green';
                         sendCodeButton.disabled = false;
-                    }else if (this.responseText === "0"){
+                        sendCodeButton.textContent = 'Send Code';
+                    } else if (this.responseText === "0") {
+                        // Email is already taken
+                        emailAvailable = false;
+                        emailStatus.style.color = 'red';
+                        emailStatus.innerHTML = '✗ Email is already taken. Please use a different email.';
+                        emailInput.style.border = '2px solid red';
                         sendCodeButton.disabled = true;
-                        document.getElementById('email_status').style.color = 'red';
-                        document.getElementById('email_status').innerHTML = 'Email is already taken';
+                        sendCodeButton.textContent = 'Email Taken';
                     }
-                    
                 }
+            };
+
+            xhr.onerror = function() {
+                emailStatus.style.color = 'red';
+                emailStatus.innerHTML = 'Error checking email. Please try again.';
+                emailInput.style.border = '2px solid red';
+                sendCodeButton.disabled = true;
             };
 
             // Send the data
@@ -409,11 +449,27 @@
         }
         function executeSendCode() {
             const email = document.getElementById('email').value;
+            const sendCodeButton = document.getElementById('getCode');
+            const emailStatus = document.getElementById('email_status');
+
+            // Double-check email availability before sending
+            if (!emailAvailable) {
+                alert('Please enter a valid and available email address before sending verification code.');
+                return;
+            }
+
+            // Disable button and show sending status
+            sendCodeButton.disabled = true;
+            sendCodeButton.textContent = 'Sending...';
+            
             const verificationCode = Math.floor(100000 + Math.random() * 900000);
             sendCode(email, verificationCode);
         }
         // Function to send the verification code via email
         function sendCode(email, code) {
+            const sendCodeButton = document.getElementById('getCode');
+            const emailStatus = document.getElementById('email_status');
+
             var params = {
                 sendername: "Guidance System",
                 to: email,
@@ -425,13 +481,109 @@
             emailjs.send("service_8jh4949", "template_gr1vonw", params)
                 .then(function (response) {
                     localStorage.setItem('code', code);
-                    alert('Email sent successfully!', response.status, response.text);
+                    sendCodeButton.textContent = 'Code Sent ✓';
+                    sendCodeButton.disabled = true;
+                    emailStatus.style.color = 'green';
+                    emailStatus.innerHTML = '✓ Verification code sent to your email';
+                    alert('Verification code sent successfully! Please check your email.');
                 }, function (error) {
-                    alert('Failed to send email:', error);
+                    sendCodeButton.textContent = 'Send Code';
+                    sendCodeButton.disabled = false;
+                    emailStatus.style.color = 'red';
+                    emailStatus.innerHTML = 'Failed to send verification code. Please try again.';
+                    alert('Failed to send email. Please try again.');
+                    console.error('Email send error:', error);
                 });
         }
 
         emailjs.init("GRi35_90k4gj9Es_f");
+
+        // Phone number validation function
+        function validatePhoneNumber(fieldId) {
+            const phoneInput = document.getElementById(fieldId);
+            const phoneStatus = document.getElementById(fieldId + '_status');
+            const registerButton = document.getElementById('register');
+            const phoneValue = phoneInput.value;
+
+            // Remove non-numeric characters
+            const numericOnly = phoneValue.replace(/[^0-9]/g, '');
+            
+            // Update input with numeric only
+            if (phoneValue !== numericOnly) {
+                phoneInput.value = numericOnly;
+            }
+
+            // Clear status if empty
+            if (!numericOnly) {
+                phoneStatus.textContent = '';
+                phoneInput.style.border = '1px solid #d1d5db';
+                return;
+            }
+
+            // Validate format: must start with 09 and be exactly 11 digits
+            const isValid = /^09[0-9]{9}$/.test(numericOnly);
+
+            if (!isValid) {
+                if (numericOnly.length < 11) {
+                    phoneStatus.textContent = 'Phone number must be 11 digits starting with 09';
+                } else if (!numericOnly.startsWith('09')) {
+                    phoneStatus.textContent = 'Phone number must start with 09';
+                } else {
+                    phoneStatus.textContent = 'Invalid phone number format';
+                }
+                phoneStatus.style.color = 'red';
+                phoneInput.style.border = '2px solid red';
+                registerButton.disabled = true;
+                registerButton.style.opacity = '0.5';
+            } else {
+                phoneStatus.textContent = 'Valid phone number';
+                phoneStatus.style.color = 'green';
+                phoneInput.style.border = '2px solid green';
+                
+                // Re-enable button only if all validations pass
+                checkAllValidations();
+            }
+        }
+
+        // Function to check all validations before enabling register button
+        function checkAllValidations() {
+            const registerButton = document.getElementById('register');
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const phone = document.getElementById('phone').value;
+            const parentContact = document.getElementById('parent_contact').value;
+            const code = document.getElementById('code').value;
+            const realCode = localStorage.getItem("code");
+
+            // Check all conditions
+            const isPasswordValid = password.length >= 6 && /[!@#$%^&*]/.test(password) && password === confirmPassword;
+            const isPhoneValid = /^09[0-9]{9}$/.test(phone);
+            const isParentContactValid = /^09[0-9]{9}$/.test(parentContact);
+            const isCodeValid = code === realCode;
+
+            // Enable button only if all validations pass
+            if (isPasswordValid && isPhoneValid && isParentContactValid && isCodeValid) {
+                registerButton.disabled = false;
+                registerButton.style.opacity = '1';
+                registerButton.title = '';
+            } else {
+                registerButton.disabled = true;
+                registerButton.style.opacity = '0.5';
+            }
+        }
+
+        // Update existing validation functions to call checkAllValidations
+        const originalValidatePassword = validatePassword;
+        validatePassword = function() {
+            originalValidatePassword();
+            checkAllValidations();
+        };
+
+        const originalValidateCode = validateCode;
+        validateCode = function() {
+            originalValidateCode();
+            checkAllValidations();
+        };
     </script>
 </body>
 </html>
