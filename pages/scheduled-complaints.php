@@ -252,6 +252,12 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <div class="flex items-center gap-2">
+                                                <button class="send-parent-sms-btn bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center gap-2"
+                                                        data-complaint-id="<?= $complaint['id'] ?>"
+                                                        title="Send SMS to Parent">
+                                                    <i class="fas fa-sms"></i>
+                                                    SMS Parent
+                                                </button>
                                                 <button class="reschedule-btn bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center gap-2" 
                                                         data-complaint-id="<?= $complaint['id'] ?>"
                                                         data-current-date="<?= $complaint['scheduled_date'] ?>"
@@ -815,6 +821,47 @@ EMEMHS Guidance Office`;
             } catch (error) {
                 console.error('Error:', error);
                 alert('Error processing request. Please try again.');
+            }
+        });
+    });
+    
+    // Handle Send Parent SMS button
+    document.querySelectorAll('.send-parent-sms-btn').forEach(button => {
+        button.addEventListener('click', async function() {
+            const complaintId = this.dataset.complaintId;
+            const originalText = this.innerHTML;
+            
+            if (!confirm('Send SMS notification to parent about this scheduled session?')) {
+                return;
+            }
+            
+            // Disable button and show loading
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+            
+            try {
+                const formData = new FormData();
+                formData.append('complaint_id', complaintId);
+                
+                const response = await fetch('../logic/send_parent_sms.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert(`SMS sent successfully to ${data.details.parent_name}`);
+                } else {
+                    alert(`Failed to send SMS: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('Error sending SMS:', error);
+                alert('An error occurred while sending SMS');
+            } finally {
+                // Re-enable button
+                this.disabled = false;
+                this.innerHTML = originalText;
             }
         });
     });

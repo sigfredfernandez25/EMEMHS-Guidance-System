@@ -661,23 +661,7 @@ $unread_count = getUnreadNotificationsCount($_SESSION['user']);
 
 <?php include 'navigation-admin.php'?>
 <div class="main-content">
-    <main class="pt-16 min-h-screen">
-        <!-- Welcome Section with Notification Bell -->
-        <div class="mb-8 flex justify-between items-center px-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800 mb-2">Welcome back, <?php echo $_SESSION['staff_name'] ?? 'Staff'; ?></h1>
-                <p class="text-gray-600">Here's what's happening today</p>
-            </div>
-            <a href="notifications.php" class="notification-icon <?php echo $unread_count > 0 ? 'has-notifications' : ''; ?>">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-600 hover:text-primary transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                </svg>
-                <?php if ($unread_count > 0): ?>
-                    <span class="notification-badge"><?php echo $unread_count; ?></span>
-                <?php endif; ?>
-            </a>
-        </div>
-
+    <main class="min-h-screen">
         <div class="p-8">
             <!-- Dashboard Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">

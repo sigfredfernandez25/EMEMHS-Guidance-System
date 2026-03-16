@@ -1,4 +1,4 @@
-<?php
+    <?php
 session_start();
 require_once '../logic/sql_querries.php';
 require_once '../logic/db_connection.php';
@@ -695,6 +695,16 @@ foreach ($complaints as $complaint) {
                     </div>
                 </div>
             </div>
+            <!-- Modal Footer with Actions -->
+            <div class="modal-footer flex justify-between items-center">
+                <button id="sendParentSMS" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition duration-200 flex items-center gap-2">
+                    <i class="fas fa-sms"></i>
+                    Send SMS to Parent
+                </button>
+                <button id="closeViewModalBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition duration-200">
+                    Close
+                </button>
+            </div>
         </div>
     </div>
 
@@ -754,9 +764,15 @@ foreach ($complaints as $complaint) {
 
             const viewModal = document.getElementById('viewDetailsModal');
             const closeViewModal = document.getElementById('closeViewModal');
+            
+            // Store current complaint ID for SMS
+            let currentComplaintIdForSMS = null;
 
             // Function to show complaint details
             function showComplaintDetails(complaint, evidence, mimeType) {
+                // Store complaint ID for SMS
+                currentComplaintIdForSMS = complaint.id;
+                
                 // Set student information
                 document.getElementById('viewFirstName').textContent = complaint.first_name;
                 document.getElementById('viewLastName').textContent = complaint.last_name;
@@ -808,6 +824,51 @@ foreach ($complaints as $complaint) {
             // Close modal handler
             closeViewModal.addEventListener('click', function() {
                 viewModal.classList.add('hidden');
+            });
+            
+            // Close modal button handler
+            document.getElementById('closeViewModalBtn').addEventListener('click', function() {
+                viewModal.classList.add('hidden');
+            });
+
+            // Send Parent SMS handler
+            document.getElementById('sendParentSMS').addEventListener('click', async function() {
+                if (!currentComplaintIdForSMS) {
+                    alert('No complaint selected');
+                    return;
+                }
+                
+                const button = this;
+                const originalText = button.innerHTML;
+                
+                // Disable button and show loading
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
+                
+                try {
+                    const formData = new FormData();
+                    formData.append('complaint_id', currentComplaintIdForSMS);
+                    
+                    const response = await fetch('../logic/send_parent_sms.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert(`SMS sent successfully to ${data.details.parent_name} (${data.details.phone_number})`);
+                    } else {
+                        alert(`Failed to send SMS: ${data.message}`);
+                    }
+                } catch (error) {
+                    console.error('Error sending SMS:', error);
+                    alert('An error occurred while sending SMS');
+                } finally {
+                    // Re-enable button
+                    button.disabled = false;
+                    button.innerHTML = originalText;
+                }
             });
 
             // Close modal when clicking outside
