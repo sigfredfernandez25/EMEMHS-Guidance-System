@@ -7,6 +7,36 @@ $isLoggedIn = isset($_SESSION['isLoggedIn']);
 // Get current page filename
 $current_page = basename($_SERVER['PHP_SELF']);
 
+// Function to get pending complaints count
+function getPendingComplaintsCount()
+{
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM complaints_concerns WHERE status = 'pending'");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'];
+    } catch (PDOException $e) {
+        error_log("Error getting pending complaints count: " . $e->getMessage());
+        return 0;
+    }
+}
+
+// Function to get scheduled complaints count
+function getScheduledComplaintsCount()
+{
+    global $pdo;
+    try {
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM complaints_concerns WHERE status = 'scheduled'");
+        $stmt->execute();
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result['count'];
+    } catch (PDOException $e) {
+        error_log("Error getting scheduled complaints count: " . $e->getMessage());
+        return 0;
+    }
+}
+
 // Function to get pending reschedule requests count
 function getPendingRescheduleRequestsCount()
 {
@@ -73,21 +103,44 @@ function getUnreadSuggestionsCount()
                 <span class="sidebar-tooltip">Dashboard</span>
             </a>
 
-            <a href="complaint-concern-admin.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'complaint-concern-admin.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Manage Complaints">
-                <span class="icon-center">
+            <div class="border-t border-gray-200 my-4"></div>
+
+            <!-- Complaints Management -->
+            <a href="complaint-concern-admin.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'complaint-concern-admin.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Pending Complaints">
+                <span class="icon-center relative">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
+                    <?php
+                    if ($isLoggedIn) {
+                        $pending_count = getPendingComplaintsCount();
+                        if ($pending_count > 0):
+                    ?>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"><?php echo $pending_count; ?></span>
+                    <?php
+                        endif;
+                    }
+                    ?>
                 </span>
-                <span class="truncate text-sm">Manage Complaints</span>
-                <span class="sidebar-tooltip">Manage Complaints</span>
+                <span class="truncate text-sm">Pending Complaints</span>
+                <span class="sidebar-tooltip">Pending Complaints</span>
             </a>
 
             <a href="scheduled-complaints.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'scheduled-complaints.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Scheduled Complaints">
-                <span class="icon-center">
+                <span class="icon-center relative">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
+                    <?php
+                    if ($isLoggedIn) {
+                        $scheduled_count = getScheduledComplaintsCount();
+                        if ($scheduled_count > 0):
+                    ?>
+                            <span class="absolute -top-1 -right-1 bg-green-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"><?php echo $scheduled_count; ?></span>
+                    <?php
+                        endif;
+                    }
+                    ?>
                 </span>
                 <span class="truncate text-sm">Scheduled Complaints</span>
                 <span class="sidebar-tooltip">Scheduled Complaints</span>
@@ -96,8 +149,7 @@ function getUnreadSuggestionsCount()
             <a href="reschedule-requests-admin.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'reschedule-requests-admin.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Reschedule Requests">
                 <span class="icon-center relative">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                     </svg>
                     <?php
                     if ($isLoggedIn) {
@@ -114,16 +166,29 @@ function getUnreadSuggestionsCount()
                 <span class="sidebar-tooltip">Reschedule Requests</span>
             </a>
 
-            <a href="admin-lost-items.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'admin-lost-items.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Lost Items">
+            <a href="all-complaints.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'all-complaints.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="All Complaints">
                 <span class="icon-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
                 </span>
-                <span class="truncate text-sm">Lost Items</span>
-                <span class="sidebar-tooltip">Lost Items</span>
+                <span class="truncate text-sm">All Complaints</span>
+                <span class="sidebar-tooltip">All Complaints</span>
             </a>
 
+            <a href="record-walkin-complaint.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'record-walkin-complaint.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Record Walk-in">
+                <span class="icon-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                </span>
+                <span class="truncate text-sm">Record Walk-in</span>
+                <span class="sidebar-tooltip">Record Walk-in</span>
+            </a>
+
+            <div class="border-t border-gray-200 my-4"></div>
+
+            <!-- Student Management -->
             <a href="students-list.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'students-list.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Students">
                 <span class="icon-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -154,6 +219,19 @@ function getUnreadSuggestionsCount()
                 </span>
                 <span class="truncate text-sm">Student Verification</span>
                 <span class="sidebar-tooltip">Student Verification</span>
+            </a>
+
+            <div class="border-t border-gray-200 my-4"></div>
+
+            <!-- Other Services -->
+            <a href="admin-lost-items.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'admin-lost-items.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Lost Items">
+                <span class="icon-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                </span>
+                <span class="truncate text-sm">Lost Items</span>
+                <span class="sidebar-tooltip">Lost Items</span>
             </a>
 
             <a href="admin-suggestions.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'admin-suggestions.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Suggestions">

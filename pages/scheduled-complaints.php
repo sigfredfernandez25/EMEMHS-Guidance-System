@@ -202,7 +202,6 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date</th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Time</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evidence</th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
                             </tr>
                         </thead>
@@ -240,15 +239,6 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 <i class="fas fa-clock text-[#800000] mr-2"></i>
                                                 <?php echo htmlspecialchars($complaint['scheduled_time']); ?>
                                             </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <?php if (!empty($complaint['evidence']) && !empty($complaint['mime_type'])): ?>
-                                                <img src="data:<?php echo $complaint['mime_type']; ?>;base64,<?php echo base64_encode($complaint['evidence']); ?>" 
-                                                     alt="Evidence" 
-                                                     class="w-16 h-16 object-cover rounded-lg shadow-sm hover:scale-110 transition-transform" />
-                                            <?php else: ?>
-                                                <span class="text-sm text-gray-500">No Image</span>
-                                            <?php endif; ?>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
                                             <div class="flex items-center gap-2">
@@ -290,7 +280,7 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="8" class="px-6 py-12 text-center">
+                                    <td colspan="7" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center">
                                             <i class="fas fa-calendar-times text-4xl text-gray-300 mb-4"></i>
                                             <h3 class="text-lg font-medium text-gray-900 mb-2">No Scheduled Complaints</h3>

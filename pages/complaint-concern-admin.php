@@ -8,17 +8,20 @@ if (!$_SESSION['isLoggedIn']) {
     header("Location: index.php");
     exit();
 }
-$stmt = $pdo->prepare(SQL_LIST_COMPLAINTS_CONCERNS);
+$stmt = $pdo->prepare("
+    SELECT cc.*,
+           COALESCE(cc.severity, 'medium') as severity,
+           s.first_name, s.last_name, s.grade_level, s.section
+    FROM " . TBL_COMPLAINTS_CONCERNS . " cc
+    JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
+    WHERE cc.status = 'pending'
+    ORDER BY cc.date_created DESC, cc.time_created DESC
+");
 $stmt->execute();
 $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Count pending complaints for the tab badge
-$pending_complaints = 0;
-foreach ($complaints as $complaint) {
-    if (isset($complaint['status']) && $complaint['status'] === 'pending') {
-        $pending_complaints++;
-    }
-}
+// Count pending complaints
+$pending_complaints = count($complaints);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -351,100 +354,86 @@ foreach ($complaints as $complaint) {
 <div class="main-content">
     <main class=" min-h-screen">
         <div class="p-8">
-            <h1 class="text-2xl font-bold text-gray-800 mb-6">Welcome, <?php echo $_SESSION['staff_name'] ?? 'Staff'; ?></h1>
-            
-            <!-- Tabs Container -->
-            <div class="tabs-container">
-                <div class="tabs-header">
-                    <button class="tab-button active" data-tab="pending">
-                        <i class="fas fa-clock"></i>
-                        Pending Complaints
-                        <span class="tab-badge"><?= $pending_complaints ?></span>
-                    </button>
-                    <button class="tab-button" data-tab="all">
-                        <i class="fas fa-list"></i>
-                        All Complaints
-                    </button>
-
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Pending Complaints</h1>
+                    <p class="text-gray-600">Manage complaints awaiting schedule</p>
                 </div>
-
-                <!-- Pending Complaints Tab -->
-                <div id="pending" class="tab-content active">
-                    <div class="flex items-center mb-6">
-                        <div class="bg-[#800000]/10 text-[#800000] rounded-full p-3 mr-4">
+                <div class="bg-[#800000]/10 text-[#800000] rounded-full p-3">
+                    <i class="fas fa-clock text-xl"></i>
+                </div>
+            </div>
+            
+            <!-- Search and Stats -->
+            <div class="minimal-card p-6 mb-6">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-[#800000]/10 text-[#800000] rounded-full p-3">
                             <i class="fas fa-exclamation-circle text-xl"></i>
                         </div>
-                        <h2 class="section-title text-xl font-semibold text-[#800000]">Pending Complaints</h2>
-                        <div class="ml-auto">
-                            <input type="text" placeholder="Search complaints..." class="search-input" />
+                        <div>
+                            <h2 class="section-title text-xl font-semibold text-[#800000]">Pending Complaints</h2>
+                            <p class="text-gray-600 text-sm">Total pending: <?= $pending_complaints ?> complaints</p>
                         </div>
                     </div>
-                    <div class="table-container">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="table-header">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade & Section</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Complaint Type</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferred Date</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evidence</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <?php 
-                                    $pending_found = false;
-                                    if (!empty($complaints)):
-                                        foreach ($complaints as $complaint):
-                                            if ($complaint['status'] == 'pending'):
-                                                $pending_found = true;
-                                    ?>
-                                        <tr class="table-row">
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['first_name']." ".$complaint['last_name']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['grade_level']." ".$complaint['section']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['type']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <?php
-                                                $severity = $complaint['severity'] ?? 'medium';
-                                                $severity_labels = [
-                                                    'low' => 'Low',
-                                                    'medium' => 'Medium',
-                                                    'high' => 'High',
-                                                    'urgent' => 'Urgent'
-                                                ];
-                                                $severity_class = 'severity-' . $severity;
-                                                ?>
-                                                <span class="severity-badge <?= $severity_class ?>">
-                                                    <i class="fas fa-exclamation-triangle"></i>
-                                                    <?= $severity_labels[$severity] ?? 'Medium' ?>
-                                                </span>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                <?php 
-                                                    $dateCreated = $complaint['date_created'] ?? '';
-                                                    if ($dateCreated) {
-                                                        echo date('M d, Y', strtotime($dateCreated));
-                                                    } else {
-                                                        echo 'N/A';
-                                                    }
-                                                ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['preferred_counseling_date']; ?></td>
-                                            <td class="px-6 py-4 whitespace-nowrap">
-                                                <?php if (!empty($complaint['evidence']) && !empty($complaint['mime_type'])): ?>
-                                                    <img src="data:<?php echo $complaint['mime_type']; ?>;base64,<?php echo base64_encode($complaint['evidence']); ?>"
-                                                         alt="Evidence"
-                                                         class="w-16 h-16 object-cover rounded-lg shadow-sm hover:scale-110 transition-transform" />
-                                                <?php else: ?>
-                                                    <span class="text-sm text-gray-500">No Image</span>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                <button class="action-btn btn-primary set-schedule-btn" title="Set Schedule" data-complaint-id="<?= $complaint['id'] ?>">
-                                                    <i class="fas fa-calendar-plus"></i>
+                    <div>
+                        <input type="text" placeholder="Search complaints..." class="search-input" id="searchInput" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="table-container">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="table-header">
+                            <tr>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade & Section</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Complaint Type</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferred Date</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <?php if (!empty($complaints)): ?>
+                                <?php foreach ($complaints as $complaint): ?>
+                                    <tr class="table-row">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['first_name']." ".$complaint['last_name']; ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['grade_level']." ".$complaint['section']; ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['type']; ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <?php
+                                            $severity = $complaint['severity'] ?? 'medium';
+                                            $severity_labels = [
+                                                'low' => 'Low',
+                                                'medium' => 'Medium',
+                                                'high' => 'High',
+                                                'urgent' => 'Urgent'
+                                            ];
+                                            $severity_class = 'severity-' . $severity;
+                                            ?>
+                                            <span class="severity-badge <?= $severity_class ?>">
+                                                <i class="fas fa-exclamation-triangle"></i>
+                                                <?= $severity_labels[$severity] ?? 'Medium' ?>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <?php 
+                                                $dateCreated = $complaint['date_created'] ?? '';
+                                                if ($dateCreated) {
+                                                    echo date('M d, Y', strtotime($dateCreated));
+                                                } else {
+                                                    echo 'N/A';
+                                                }
+                                            ?>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['preferred_counseling_date']; ?></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                            <button class="action-btn btn-primary set-schedule-btn" title="Set Schedule" data-complaint-id="<?= $complaint['id'] ?>">
+                                                <i class="fas fa-calendar-plus"></i>
                                                     Schedule
                                                 </button>
                                                 <button class="action-btn btn-secondary view-complaint ml-2" title="View Details"
@@ -461,158 +450,22 @@ foreach ($complaints as $complaint) {
                                                 </button>
                                             </td>
                                         </tr>
-                                    <?php 
-                                            endif;
-                                        endforeach;
-                                    endif;
-                                    if (!$pending_found):
-                                    ?>
-                                        <tr>
-                                            <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
-                                                No pending complaints found
-                                            </td>
-                                        </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- All Complaints Tab -->
-                <div id="all" class="tab-content">
-                    <div class="flex items-center mb-6">
-                        <div class="bg-[#800000]/10 text-[#800000] rounded-full p-3 mr-4">
-                            <i class="fas fa-list text-xl"></i>
-                        </div>
-                        <h2 class="section-title text-xl font-semibold text-[#800000]">All Complaints</h2>
-                        <div class="ml-auto">
-                            <input type="text" placeholder="Search all complaints..." class="search-input" />
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200">
-                                <thead class="table-header">
+                                    <?php endforeach; ?>
+                                <?php else: ?>
                                     <tr>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Student Name</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade&&Section</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Complaint Type</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferred Date</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evidence</th>
-                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                        <td colspan="7" class="px-6 py-4 text-center">
+                                            <div class="flex flex-col items-center py-8">
+                                                <i class="fas fa-inbox text-4xl text-gray-300 mb-4"></i>
+                                                <h3 class="text-lg font-medium text-gray-900 mb-2">No Pending Complaints</h3>
+                                                <p class="text-sm text-gray-500">All complaints have been scheduled or resolved.</p>
+                                            </div>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200">
-                                    <?php if (!empty($complaints)): ?>
-                                        <?php foreach ($complaints as $complaint): ?>
-                                            <tr class="table-row">
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['first_name']." ".$complaint['last_name']; ?></td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['grade_level']." ".$complaint['section']; ?></td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['type']; ?></td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <?php
-                                                    $severity = $complaint['severity'] ?? 'medium';
-                                                    $severity_labels = [
-                                                        'low' => 'Low',
-                                                        'medium' => 'Medium',
-                                                        'high' => 'High',
-                                                        'urgent' => 'Urgent'
-                                                    ];
-                                                    $severity_class = 'severity-' . $severity;
-                                                    ?>
-                                                    <span class="severity-badge <?= $severity_class ?>">
-                                                        <i class="fas fa-exclamation-triangle"></i>
-                                                        <?= $severity_labels[$severity] ?? 'Medium' ?>
-                                                    </span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <span class="status-badge status-<?php echo strtolower($complaint['status']); ?> flex items-center justify-center gap-1">
-                                                        <?php if ($complaint['status'] === 'pending'): ?>
-                                                            <i class="fas fa-clock"></i>
-                                                        <?php elseif ($complaint['status'] === 'scheduled'): ?>
-                                                            <i class="fas fa-calendar-check"></i>
-                                                        <?php elseif ($complaint['status'] === 'resolved'): ?>
-                                                            <i class="fas fa-check-circle"></i>
-                                                        <?php endif; ?>
-                                                        <?php echo ucfirst($complaint['status']); ?>
-                                                    </span>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    <?php 
-                                                        $dateCreated = $complaint['date_created'] ?? '';
-                                                        if ($dateCreated) {
-                                                            echo date('M d, Y', strtotime($dateCreated));
-                                                        } else {
-                                                            echo 'N/A';
-                                                        }
-                                                    ?>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    <?php echo $complaint['preferred_counseling_date']; ?>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    <?php
-                                                    if ($complaint['status'] == 'pending') {
-                                                        echo '<span class="text-gray-500">Not scheduled yet</span>';
-                                                    } else if ($complaint['status'] == 'scheduled') {
-                                                        echo $complaint['scheduled_date'] . ' ' . $complaint['scheduled_time'];
-                                                    } else if ($complaint['status'] == 'resolved') {
-                                                        echo $complaint['scheduled_date'] . ' ' . $complaint['scheduled_time'] . " (Resolved)";
-                                                    }
-                                                    ?>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap">
-                                                    <?php if (!empty($complaint['evidence']) && !empty($complaint['mime_type'])): ?>
-                                                        <img src="data:<?php echo $complaint['mime_type']; ?>;base64,<?php echo base64_encode($complaint['evidence']); ?>"
-                                                             alt="Evidence"
-                                                             class="w-16 h-16 object-cover rounded-lg shadow-sm hover:scale-110 transition-transform" />
-                                                    <?php else: ?>
-                                                        <span class="text-sm text-gray-500">No Image</span>
-                                                    <?php endif; ?>
-                                                </td>
-                                                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                                    <div class="flex items-center gap-2">
-                                                        <?php if ($complaint['status'] === 'pending'): ?>
-                                                            <button class="action-btn btn-primary set-schedule-btn" title="Set Schedule" data-complaint-id="<?= $complaint['id'] ?>">
-                                                                <i class="fas fa-calendar-plus"></i>
-                                                                Schedule
-                                                            </button>
-                                                        <?php endif; ?>
-                                                        <button class="action-btn btn-secondary view-complaint" title="View Details"
-                                                                data-complaint='<?php
-                                                                    $complaintData = $complaint;
-                                                                    unset($complaintData['evidence']);
-                                                                    unset($complaintData['mime_type']);
-                                                                    echo json_encode($complaintData);
-                                                                ?>'
-                                                                data-evidence='<?php echo !empty($complaint['evidence']) ? base64_encode($complaint['evidence']) : ''; ?>'
-                                                                data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'>
-                                                            <i class="fas fa-eye"></i>
-                                                            View
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    <?php else: ?>
-                                        <tr>
-                                            <td colspan="10" class="px-6 py-4 text-center text-sm text-gray-500">
-                                                No complaints found
-                                            </td>
-                                        </tr>
-                                    <?php endif; ?>
-                                </tbody>
-                            </table>
-                        </div>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-
-
             </div>
         </div>
     </main>
@@ -767,23 +620,6 @@ foreach ($complaints as $complaint) {
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Tab switching functionality
-            const tabButtons = document.querySelectorAll('.tab-button');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Remove active class from all buttons and contents
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabContents.forEach(content => content.classList.remove('active'));
-
-                    // Add active class to clicked button and corresponding content
-                    button.classList.add('active');
-                    const tabId = button.getAttribute('data-tab');
-                    document.getElementById(tabId).classList.add('active');
-                });
-            });
-
             const viewModal = document.getElementById('viewDetailsModal');
             const closeViewModal = document.getElementById('closeViewModal');
             
