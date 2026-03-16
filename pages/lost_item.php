@@ -5,7 +5,13 @@ session_start();
 if (!isset($_SESSION['isLoggedIn'])) {
     echo "<script>alert('You are not logged in!!'); window.location.href = 'index.php';</script>";
 }
+
+// Check if student is verified
 $student_id = $_SESSION['student_id'];
+$stmt = $pdo->prepare("SELECT is_verified FROM students WHERE id = ?");
+$stmt->execute([$student_id]);
+$student = $stmt->fetch(PDO::FETCH_ASSOC);
+$is_verified = $student && $student['is_verified'] == 1;
 
 $stmt = $pdo->prepare(SQL_LIST_LOST_ITEMS_BY_STUDENT);
 $stmt->execute([$student_id]);
@@ -173,6 +179,22 @@ try {
     <?php include 'navigation.php'; ?>
 
     <main class="px-4 py-4 sm:py-6 lg:px-8 max-w-7xl mx-auto">
+        <!-- Verification Alert Banner -->
+        <?php if (!$is_verified): ?>
+            <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500 text-2xl mt-1"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-red-800">Account Not Verified</h3>
+                        <p class="text-red-700 mt-2">Your account is currently pending verification. You cannot report lost items until your school ID has been verified by the guidance office.</p>
+                        <p class="text-red-700 mt-2 font-medium">Please contact the guidance office for assistance with your verification.</p>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
         <!-- Mobile-First Header -->
         <div class="mobile-section">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
@@ -187,7 +209,7 @@ try {
                 
                 <!-- Desktop action button -->
                 <div class="hidden sm:block">
-                    <a href="lost-item-form.php" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold whitespace-nowrap">
+                    <a href="<?php echo $is_verified ? 'lost-item-form.php' : '#'; ?>" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold whitespace-nowrap <?php echo !$is_verified ? 'opacity-50 cursor-not-allowed' : ''; ?>" <?php echo !$is_verified ? 'onclick="event.preventDefault(); alert(\'Your account must be verified before you can report lost items.\');"' : ''; ?>>
                         <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                         </svg>
@@ -198,7 +220,7 @@ try {
 
             <!-- Mobile action buttons -->
             <div class="flex flex-col gap-3 sm:hidden">
-                <a href="lost-item-form.php" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold text-center">
+                <a href="<?php echo $is_verified ? 'lost-item-form.php' : '#'; ?>" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold text-center <?php echo !$is_verified ? 'opacity-50 cursor-not-allowed' : ''; ?>" <?php echo !$is_verified ? 'onclick="event.preventDefault(); alert(\'Your account must be verified before you can report lost items.\');"' : ''; ?>>
                     <svg class="w-5 h-5 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
@@ -373,7 +395,7 @@ try {
                         </svg>
                         <h3 class="text-lg sm:text-xl font-medium text-gray-900 mb-2">No Lost Items</h3>
                         <p class="text-sm sm:text-base text-gray-500 mb-6">You haven't reported any lost items yet.</p>
-                        <a href="lost-item-form.php" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center">
+                        <a href="<?php echo $is_verified ? 'lost-item-form.php' : '#'; ?>" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold inline-flex items-center <?php echo !$is_verified ? 'opacity-50 cursor-not-allowed' : ''; ?>" <?php echo !$is_verified ? 'onclick="event.preventDefault(); alert(\'Your account must be verified before you can report lost items.\');"' : ''; ?>>
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>

@@ -134,6 +134,28 @@ function getUnreadSuggestionsCount()
                 <span class="sidebar-tooltip">Students</span>
             </a>
 
+            <a href="student-verification.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'student-verification.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Student Verification">
+                <span class="icon-center relative">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    <?php
+                    if ($isLoggedIn) {
+                        $stmt = $pdo->prepare("SELECT COUNT(*) FROM students WHERE is_verified = 0");
+                        $stmt->execute();
+                        $unverified_count = $stmt->fetchColumn();
+                        if ($unverified_count > 0):
+                    ?>
+                            <span class="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center"><?php echo $unverified_count; ?></span>
+                    <?php
+                        endif;
+                    }
+                    ?>
+                </span>
+                <span class="truncate text-sm">Student Verification</span>
+                <span class="sidebar-tooltip">Student Verification</span>
+            </a>
+
             <a href="admin-suggestions.php" class="nav-link flex items-center space-x-3 px-4 py-2.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'admin-suggestions.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Suggestions">
                 <span class="icon-center relative">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

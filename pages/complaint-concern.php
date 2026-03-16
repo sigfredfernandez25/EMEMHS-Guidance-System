@@ -5,7 +5,14 @@ session_start();
 if (!isset($_SESSION['isLoggedIn'])) {
     echo "<script>alert('You are not logged in!!'); window.location.href = 'index.php';</script>";
 }
+
+// Check if student is verified
 $student_id = $_SESSION['student_id'];
+$stmt = $pdo->prepare("SELECT is_verified FROM students WHERE id = ?");
+$stmt->execute([$student_id]);
+$student = $stmt->fetch(PDO::FETCH_ASSOC);
+$is_verified = $student && $student['is_verified'] == 1;
+
 $stmt = $pdo->prepare(SQL_LIST_COMPLAINTS_CONCERNS_BY_STUDENT);
 $stmt->execute([$student_id]);
 $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -92,10 +99,25 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <main class="max-w-7xl mx-auto px-4 py-8">
         <div class="flex justify-between items-center mb-8">
             <h1 class="text-2xl md:text-3xl font-bold text-[#800000]">Your Complaints</h1>
-            <a href="complaint-concern-form.php" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold">
+            <a href="<?php echo $is_verified ? 'complaint-concern-form.php' : '#'; ?>" class="btn-primary text-white px-6 py-3 rounded-lg font-semibold <?php echo !$is_verified ? 'opacity-50 cursor-not-allowed' : ''; ?>" <?php echo !$is_verified ? 'onclick="event.preventDefault(); alert(\'Your account must be verified before you can submit complaints.\');"' : ''; ?>>
                 Add New Complaint
             </a>
         </div>
+
+        <?php if (!$is_verified): ?>
+            <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-circle text-red-500 text-2xl mt-1"></i>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-semibold text-red-800">Account Not Verified</h3>
+                        <p class="text-red-700 mt-2">Your account is currently pending verification. You cannot submit new complaints until your school ID has been verified by the guidance office.</p>
+                        <p class="text-red-700 mt-2 font-medium">Please contact the guidance office for assistance with your verification.</p>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <div class="table-container">
             <div class="overflow-x-auto">

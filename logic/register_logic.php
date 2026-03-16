@@ -16,6 +16,26 @@ try {
     $password = $_POST['password'];
     $address = trim($_POST['address']);
 
+    // Handle school ID image upload
+    $school_id_image = null;
+    $school_id_mime_type = null;
+    
+    if (isset($_FILES['school_id_image']) && $_FILES['school_id_image']['error'] === UPLOAD_ERR_OK) {
+        $imageTmpPath = $_FILES['school_id_image']['tmp_name'];
+        
+        if (!empty($imageTmpPath) && file_exists($imageTmpPath)) {
+            $school_id_image = file_get_contents($imageTmpPath);
+            $school_id_mime_type = mime_content_type($imageTmpPath);
+            
+            // Validate it's an image
+            if (!str_starts_with($school_id_mime_type, 'image/')) {
+                throw new Exception("School ID must be an image file");
+            }
+        }
+    } else {
+        throw new Exception("School ID image is required for registration");
+    }
+
     // Validate phone numbers (must be 11 digits starting with 09)
     if (!preg_match('/^09[0-9]{9}$/', $phone)) {
         throw new Exception("Invalid phone number format. Must be 11 digits starting with 09 (e.g., 09123456789)");
@@ -66,7 +86,9 @@ try {
         $grade_level,
         $section,
         $phone,
-        $address
+        $address,
+        $school_id_image,
+        $school_id_mime_type
     ]);
     $student_id = $pdo->lastInsertId();
  

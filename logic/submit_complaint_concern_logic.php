@@ -51,6 +51,15 @@ try {
         exit();
     }
 
+    // Check if student is verified
+    $stmt = $pdo->prepare(SQL_CHECK_STUDENT_VERIFIED);
+    $stmt->execute([$student_id]);
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$result || $result['is_verified'] != 1) {
+        throw new Exception("Your account is not yet verified by the admin. Please wait for verification before submitting complaints.");
+    }
+
     // Check submission limits only for new complaints (not updates)
     if ($transacType == "insert") {
         // Check daily limit

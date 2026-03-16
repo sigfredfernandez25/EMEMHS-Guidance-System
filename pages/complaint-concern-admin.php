@@ -388,6 +388,7 @@ foreach ($complaints as $complaint) {
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade & Section</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Complaint Type</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
+                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferred Date</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evidence</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
@@ -420,6 +421,16 @@ foreach ($complaints as $complaint) {
                                                     <i class="fas fa-exclamation-triangle"></i>
                                                     <?= $severity_labels[$severity] ?? 'Medium' ?>
                                                 </span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                <?php 
+                                                    $dateCreated = $complaint['date_created'] ?? '';
+                                                    if ($dateCreated) {
+                                                        echo date('M d, Y', strtotime($dateCreated));
+                                                    } else {
+                                                        echo 'N/A';
+                                                    }
+                                                ?>
                                             </td>
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo $complaint['preferred_counseling_date']; ?></td>
                                             <td class="px-6 py-4 whitespace-nowrap">
@@ -457,7 +468,7 @@ foreach ($complaints as $complaint) {
                                     if (!$pending_found):
                                     ?>
                                         <tr>
-                                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
                                                 No pending complaints found
                                             </td>
                                         </tr>
@@ -489,6 +500,7 @@ foreach ($complaints as $complaint) {
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Complaint Type</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preferred Date</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date</th>
                                         <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evidence</th>
@@ -529,6 +541,16 @@ foreach ($complaints as $complaint) {
                                                         <?php endif; ?>
                                                         <?php echo ucfirst($complaint['status']); ?>
                                                     </span>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                    <?php 
+                                                        $dateCreated = $complaint['date_created'] ?? '';
+                                                        if ($dateCreated) {
+                                                            echo date('M d, Y', strtotime($dateCreated));
+                                                        } else {
+                                                            echo 'N/A';
+                                                        }
+                                                    ?>
                                                 </td>
                                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                                     <?php echo $complaint['preferred_counseling_date']; ?>
@@ -579,7 +601,7 @@ foreach ($complaints as $complaint) {
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="8" class="px-6 py-4 text-center text-sm text-gray-500">
+                                            <td colspan="10" class="px-6 py-4 text-center text-sm text-gray-500">
                                                 No complaints found
                                             </td>
                                         </tr>
@@ -786,6 +808,14 @@ foreach ($complaints as $complaint) {
                 document.getElementById('viewPreferredDate').textContent = complaint.preferred_counseling_date || 'N/A';
                 document.getElementById('viewScheduledDate').textContent = complaint.scheduled_date || 'N/A';
                 document.getElementById('viewScheduledTime').textContent = complaint.scheduled_time || 'N/A';
+
+                // Hide Send SMS button if complaint is resolved
+                const sendSMSBtn = document.getElementById('sendParentSMS');
+                if (complaint.status === 'resolved') {
+                    sendSMSBtn.style.display = 'none';
+                } else {
+                    sendSMSBtn.style.display = 'inline-flex';
+                }
 
                 // Set evidence
                 const evidenceContainer = document.getElementById('viewEvidence');

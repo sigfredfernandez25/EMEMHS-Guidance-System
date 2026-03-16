@@ -139,8 +139,8 @@ define(
 define(
     'SQL_INSERT_STUDENT',
     "INSERT INTO " . TBL_STUDENTS .
-        " (user_id, first_name, middle_name, last_name, grade_level, section, phone_number, address) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        " (user_id, first_name, middle_name, last_name, grade_level, section, phone_number, address, school_id_image, school_id_mime_type) 
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 );
 
 define(
@@ -157,6 +157,31 @@ define(
      LEFT JOIN " . TBL_PARENTS . " p ON s.id = p.student_id
      LEFT JOIN " . TBL_USERS . " u ON s.user_id = u.id
      WHERE s.id = ?"
+);
+
+define(
+    'SQL_CHECK_STUDENT_VERIFIED',
+    "SELECT is_verified FROM " . TBL_STUDENTS . " WHERE id = ?"
+);
+
+define(
+    'SQL_VERIFY_STUDENT',
+    "UPDATE " . TBL_STUDENTS . " SET is_verified = 1 WHERE id = ?"
+);
+
+define(
+    'SQL_UNVERIFY_STUDENT',
+    "UPDATE " . TBL_STUDENTS . " SET is_verified = 0 WHERE id = ?"
+);
+
+define(
+    'SQL_GET_UNVERIFIED_STUDENTS',
+    "SELECT s.*, u.email, p.parent_name, p.contact_number
+     FROM " . TBL_STUDENTS . " s
+     LEFT JOIN " . TBL_USERS . " u ON s.user_id = u.id
+     LEFT JOIN " . TBL_PARENTS . " p ON s.id = p.student_id
+     WHERE s.is_verified = 0
+     ORDER BY s.id DESC"
 );
 
 

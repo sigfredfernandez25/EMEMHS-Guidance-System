@@ -5,6 +5,14 @@ session_start();
 if (!isset($_SESSION['isLoggedIn'])) {
     echo "<script>alert('You are not logged in!!'); window.location.href = 'index.php';</script>";
 }
+
+// Check if student is verified
+$student_id = $_SESSION['student_id'];
+$stmt = $pdo->prepare("SELECT is_verified FROM students WHERE id = ?");
+$stmt->execute([$student_id]);
+$student = $stmt->fetch(PDO::FETCH_ASSOC);
+$is_verified = $student && $student['is_verified'] == 1;
+
 $selected_row = null;
 $id = "0";
 if (isset($_POST['user'])) {
@@ -83,7 +91,22 @@ if (isset($_POST['user'])) {
         <div class="form-container p-8">
             <h1 class="text-2xl md:text-3xl font-bold text-[#800000] mb-8">Submit A Complaint/Concern</h1>
 
-            <form action="../logic/submit_complaint_concern_logic.php" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <?php if (!$is_verified): ?>
+                <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-lg">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-500 text-2xl mt-1"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-red-800">Account Not Verified</h3>
+                            <p class="text-red-700 mt-2">Your account is currently pending verification. You cannot submit complaints or concerns until your school ID has been verified by the guidance office.</p>
+                            <p class="text-red-700 mt-2 font-medium">Please contact the guidance office for assistance with your verification.</p>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <form action="../logic/submit_complaint_concern_logic.php" method="POST" enctype="multipart/form-data" class="space-y-6" <?php echo !$is_verified ? 'style="opacity: 0.5; pointer-events: none;"' : ''; ?>>
                 <div class="space-y-2">
                     <label for="complaint_type" class="block text-sm font-medium text-gray-700">Type of Complaint/Concern <span class="text-red-500">*</span></label>
                     <select name="complaint_type" id="complaint_type" required

@@ -90,7 +90,7 @@
             </div>
 
             <div class="form-container rounded-3xl p-6 sm:p-8">
-                <form action="../logic/register_logic.php" method="POST" class="space-y-6">
+                <form action="../logic/register_logic.php" method="POST" enctype="multipart/form-data" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Left Column -->
                         <div class="space-y-6">
@@ -138,11 +138,12 @@
                                             <input type="text" id="section" name="section" required
                                                 class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
                                         </div>
-                                        <div>
-                                            <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-                                            <input type="text" id="address" name="address" required
-                                                class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
-                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label for="address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                        <input type="text" id="address" name="address" required
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
                                     </div>
                                 </div>
                             </div>
@@ -153,11 +154,11 @@
                                 <div class="space-y-4">
                                     <div>
                                         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                                        <div class="flex gap-2">
+                                        <div class="flex flex-col sm:flex-row gap-2">
                                             <input type="email" id="email" name="email" placeholder="your.email@gmail.com" oninput="validateEmail()" required
                                                 class="flex-1 px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
                                             <button type="button" id="getCode" onclick="executeSendCode()" disabled
-                                                class="btn-primary px-4 py-3 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                                                class="btn-primary px-4 py-3 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
                                                 Send Code
                                             </button>
                                         </div>
@@ -234,6 +235,22 @@
                                         <input type="password" id="confirm_password" name="confirm_password" oninput="validatePassword()" required
                                             class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
                                         <span id="password_match_status" class="text-xs text-red-600 mt-1 block"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- School ID Verification Section -->
+                            <div class="form-section">
+                                <h2 class="section-title text-lg font-semibold mb-4">School ID Verification</h2>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label for="school_id_image" class="block text-sm font-medium text-gray-700 mb-1">Upload School ID Image</label>
+                                        <input type="file" id="school_id_image" name="school_id_image" accept="image/*" required onchange="previewSchoolID()"
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
+                                        <p class="text-xs text-gray-500 mt-1">Please upload a clear photo of your school ID for verification. Your account will be verified by admin before you can submit complaints or report lost items.</p>
+                                    </div>
+                                    <div id="school_id_preview" class="hidden mt-2">
+                                        <img id="preview_image" src="" alt="School ID Preview" class="max-w-full h-auto rounded-lg border border-gray-300">
                                     </div>
                                 </div>
                             </div>
@@ -497,6 +514,26 @@
         }
 
         emailjs.init("GRi35_90k4gj9Es_f");
+
+        // School ID preview function
+        function previewSchoolID() {
+            const fileInput = document.getElementById('school_id_image');
+            const preview = document.getElementById('school_id_preview');
+            const previewImage = document.getElementById('preview_image');
+            
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                    preview.classList.remove('hidden');
+                };
+                
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
 
         // Phone number validation function
         function validatePhoneNumber(fieldId) {
