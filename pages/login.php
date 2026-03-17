@@ -7,111 +7,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>System's Login</title>
+    <title>Login - EMEMHS Guidance System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #fafafa;
             min-height: 100vh;
         }
 
         .form-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .input-focus {
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.9);
-        }
-
-        .input-focus:focus {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(128, 0, 0, 0.1);
             background: white;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border-radius: 24px;
+            overflow: hidden;
+        }
+
+        .input-field {
+            transition: all 0.3s ease;
+            border: 2px solid #e5e7eb;
+        }
+
+        .input-field:focus {
+            border-color: #800000;
+            box-shadow: 0 0 0 3px rgba(128, 0, 0, 0.1);
+            outline: none;
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #800000 0%, #a52a2a 100%);
+            background: #800000;
+            color: #fff;
             transition: all 0.3s ease;
             position: relative;
             overflow: hidden;
         }
 
         .btn-primary:hover {
+            background: #a52a2a;
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(128, 0, 0, 0.2);
+            box-shadow: 0 6px 20px rgba(128, 0, 0, 0.2);
         }
 
         .btn-primary:active {
             transform: translateY(0);
         }
 
-        .btn-primary::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .back-link {
+            transition: all 0.2s ease;
         }
 
-        .btn-primary:hover::after {
-            opacity: 1;
+        .back-link:hover {
+            transform: translateX(-4px);
         }
 
         .message {
             display: none;
-            padding: 1rem;
-            margin: 1rem 0;
-            border-radius: 0.5rem;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
             font-weight: 500;
-            width: 100% !important;
+            font-size: 0.875rem;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: #d1fae5;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
         }
 
         .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
         }
 
         .warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
+            background: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .logo-section {
+            background: linear-gradient(135deg, #f8eaea 0%, #fafafa 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .logo-section {
+                padding: 2rem 1rem;
+            }
         }
     </style>
 </head>
 
-<body class="flex items-center justify-center p-4 sm:p-6 md:p-8">
-    
+<body class="min-h-screen flex items-center justify-center p-4">
     <div class="container mx-auto max-w-6xl">
-    <div>
-        <a href="../index.php" class="inline-flex items-center text-gray-600 hover:text-[#800000] transition-colors duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            Back
-        </a>
-    </div>
-        <div class="form-container rounded-3xl overflow-hidden flex flex-col md:flex-row">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="../index.php" class="back-link inline-flex items-center text-gray-600 hover:text-[#800000] transition-colors duration-200 font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Home
+            </a>
+        </div>
+
+        <!-- Login Card -->
+        <div class="form-container flex flex-col md:flex-row">
             <!-- Left Column - Login Form -->
-            <div class="w-full md:w-1/2 p-6 sm:p-8 md:p-12">
-                <div class="text-center mb-8">
-                    <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold text-[#800000] mb-2">Welcome Back</h1>
-                    <p class="text-gray-600 text-sm sm:text-base">Please login to your account</p>
+            <div class="w-full md:w-1/2 p-6 sm:p-8 lg:p-12">
+                <!-- Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl sm:text-4xl font-bold text-[#800000] mb-3">Welcome Back</h1>
+                    <p class="text-gray-600 text-base">Sign in to access your guidance account</p>
                 </div>
 
                 <!-- Message Display Area -->
@@ -129,44 +153,54 @@
                     </div>
                 <?php endif; ?>
 
-                <form action="../logic/login_logic.php" method="POST" class="space-y-6">
-                    <div class="space-y-4">
-                        <div>
-                            <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                            <input type="text" id="username" name="username" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
-                        </div>
+                <!-- Login Form -->
+                <form action="../logic/login_logic.php" method="POST" class="space-y-5">
+                    <div>
+                        <label for="username" class="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                        <input type="text" id="username" name="username" required
+                            placeholder="Enter your email"
+                            class="input-field w-full px-4 py-3 rounded-xl text-gray-900 placeholder-gray-400">
+                    </div>
 
-                        <div>
-                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                            <input type="password" id="password" name="password" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
-                        </div>
+                    <div>
+                        <label for="password" class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                        <input type="password" id="password" name="password" required
+                            placeholder="Enter your password"
+                            class="input-field w-full px-4 py-3 rounded-xl text-gray-900 placeholder-gray-400">
+                    </div>
 
-                        <div class="flex items-center justify-end">
-                            
-                            <a href="forgot-password.php" class="text-sm text-[#800000] hover:text-[#a52a2a] transition-colors duration-200">Forgot password?</a>
-                        </div>
+                    <div class="flex items-center justify-end">
+                        <a href="forgot-password.php" class="text-sm text-[#800000] hover:text-[#a52a2a] font-medium transition-colors duration-200">
+                            Forgot password?
+                        </a>
                     </div>
 
                     <button type="submit"
-                        class="btn-primary w-full px-4 py-3 text-white font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2">
-                        Log In
+                        class="btn-primary w-full px-4 py-3.5 text-white font-semibold rounded-xl text-base">
+                        Sign In
                     </button>
-
-                    <div class="text-center mt-6">
-                        <p class="text-sm text-gray-600">
-                            Don't have an account?
-                            <a href="register.php" class="text-[#800000] hover:text-[#a52a2a] font-medium transition-colors duration-200">Register here</a>
-                        </p>
-                    </div>
                 </form>
+
+                <!-- Register Link -->
+                <div class="mt-8 pt-6 border-t border-gray-100 text-center">
+                    <p class="text-sm text-gray-600">
+                        Don't have an account?
+                        <a href="register.php" class="text-[#800000] hover:text-[#a52a2a] font-semibold transition-colors duration-200">
+                            Create Account
+                        </a>
+                    </p>
+                </div>
             </div>
 
-            <!-- Right Column - Image -->
-            <div class="w-full md:w-1/2  relative">
-                <div class="absolute inset-0 "></div>
-                <img src="../image/ememhs-logo.png" alt="Login" class="w-[500px] h-auto mx-auto p-10 relative z-10">
+            <!-- Right Column - Logo Section -->
+            <div class="w-full md:w-1/2 logo-section">
+                <div class="text-center">
+                    <img src="../image/ememhs-logo.png" alt="EMEMHS Logo" class="w-48 sm:w-64 md:w-80 h-auto mx-auto mb-6">
+                    <h2 class="text-xl sm:text-2xl font-bold text-[#800000] mb-2">EMEMHS Guidance System</h2>
+                    <p class="text-gray-600 text-sm sm:text-base max-w-sm mx-auto">
+                        Empowering students through guidance and support
+                    </p>
+                </div>
             </div>
         </div>
     </div>

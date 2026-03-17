@@ -1,9 +1,13 @@
 <?php
+// Start output buffering to catch any stray output
+ob_start();
+
 // Set JSON response header immediately
 header('Content-Type: application/json; charset=utf-8');
 
 // Set error handler to catch all errors and output as JSON
 set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    ob_clean(); // Clear any output
     http_response_code(500);
     echo json_encode([
         'success' => false, 
@@ -18,6 +22,7 @@ try {
     require_once 'sql_querries.php';
     require_once 'db_connection.php';
 } catch (Exception $e) {
+    ob_clean(); // Clear any output
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Database connection failed: ' . $e->getMessage()]);
     exit();
@@ -25,8 +30,9 @@ try {
 
 // Check if admin is logged in
 if (!isset($_SESSION['isLoggedIn']) || !$_SESSION['isLoggedIn'] || $_SESSION['role'] !== 'admin') {
+    ob_clean(); // Clear any output
     http_response_code(403);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access. Session: ' . json_encode($_SESSION)]);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
     exit();
 }
 
@@ -34,6 +40,7 @@ if (!isset($_SESSION['isLoggedIn']) || !$_SESSION['isLoggedIn'] || $_SESSION['ro
 $input = json_decode(file_get_contents('php://input'), true);
 
 if (!$input || !isset($input['student_id']) || !isset($input['is_verified'])) {
+    ob_clean(); // Clear any output
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Missing required parameters']);
     exit();
@@ -59,7 +66,7 @@ try {
     }
     
     // Get student details for notification
-    $stmt = $pdo->prepare("SELECT s.*, u.id as user_id FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = ?");
+    $stmt = $pdo->prepare("SELECT s.*, u.id as user_id, u.email FROM students s JOIN users u ON s.user_id = u.id WHERE s.id = ?");
     $stmt->execute([$student_id]);
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
     
@@ -86,9 +93,14 @@ try {
     
     $pdo->commit();
     
+    // Clear any stray output before sending JSON
+    ob_clean();
+    
     echo json_encode([
         'success' => true, 
-        'message' => $is_verified ? 'Student verified successfully' : 'Student rejected successfully'
+        'message' => $is_verified ? 'Student verified successfully' : 'Student rejected successfully',
+        'student_email' => $student['email'] ?? null,
+        'student_name' => ($student['first_name'] ?? '') . ' ' . ($student['last_name'] ?? '')
     ]);
     
 } catch (Exception $e) {
@@ -97,7 +109,11 @@ try {
     }
     error_log("Student verification error: " . $e->getMessage());
     
+    ob_clean(); // Clear any output
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
+
+// Flush the output buffer
+ob_end_flush();
 ?>

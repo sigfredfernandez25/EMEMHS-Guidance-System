@@ -5,7 +5,7 @@ require_once '../logic/sql_querries.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['isLoggedIn'])) {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 

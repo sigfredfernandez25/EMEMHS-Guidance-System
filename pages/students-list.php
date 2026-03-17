@@ -5,16 +5,17 @@ require_once '../logic/sql_querries.php';
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['isLoggedIn']) || $_SESSION['role'] !== 'admin') {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 
 try {
-    // Get all students
+    // Get all students with parent information
     $stmt = $pdo->prepare("
-        SELECT s.*, u.email
+        SELECT s.*, u.email, p.parent_name, p.contact_number
         FROM " . TBL_STUDENTS . " s
         LEFT JOIN " . TBL_USERS . " u ON s.user_id = u.id
+        LEFT JOIN parents p ON s.id = p.student_id
         ORDER BY s.last_name ASC, s.first_name ASC
     ");
     $stmt->execute();
@@ -108,16 +109,19 @@ try {
                                         Name
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Grade Level
-                                    </th>
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Section
+                                        Grade & Section
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Contact Info
                                     </th>
                                     <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Parent/Guardian
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Status
+                                    </th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Actions
                                     </th>
                                 </tr>
                             </thead>
@@ -133,19 +137,27 @@ try {
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <?php echo htmlspecialchars($student['grade_level']); ?>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            <?php echo htmlspecialchars($student['section']); ?>
+                                            <?php echo htmlspecialchars($student['grade_level'] . ' - ' . $student['section']); ?>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             <div>Email: <?php echo htmlspecialchars($student['email'] ?? 'N/A'); ?></div>
                                             <div>Phone: <?php echo htmlspecialchars($student['phone_number'] ?? 'N/A'); ?></div>
                                         </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <div>Name: <?php echo htmlspecialchars($student['parent_name'] ?? 'N/A'); ?></div>
+                                            <div>Phone: <?php echo htmlspecialchars($student['contact_number'] ?? 'N/A'); ?></div>
+                                        </td>
                                         <td class="px-6 py-4 whitespace-nowrap">
                                             <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                                 Active
                                             </span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <a href="edit-student.php?id=<?php echo htmlspecialchars($student['id']); ?>" 
+                                               class="text-[#800000] hover:text-[#600000] transition duration-200 flex items-center gap-1">
+                                                <i class="fas fa-edit"></i>
+                                                Edit
+                                            </a>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>
@@ -206,7 +218,7 @@ try {
                     if (!noResultsRow) {
                         const newRow = document.createElement('tr');
                         const cell = document.createElement('td');
-                        cell.colSpan = 6;
+                        cell.colSpan = 7;
                         cell.className = 'px-6 py-4 text-center text-sm text-gray-500';
                         cell.textContent = 'No matching students found';
                         newRow.appendChild(cell);

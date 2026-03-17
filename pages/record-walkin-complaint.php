@@ -5,7 +5,7 @@ require_once '../logic/db_connection.php';
 
 // Check if staff is logged in
 if (!$_SESSION['isLoggedIn']) {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 ?>

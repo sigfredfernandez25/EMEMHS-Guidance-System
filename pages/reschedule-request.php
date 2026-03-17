@@ -6,7 +6,7 @@ require_once '../logic/notification_logic.php';
 
 // Check if student is logged in
 if (!isset($_SESSION['isLoggedIn']) || $_SESSION['role'] !== 'student') {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 

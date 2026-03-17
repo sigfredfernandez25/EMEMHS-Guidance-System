@@ -5,7 +5,7 @@ require_once '../logic/db_connection.php';
 
 // Check if admin is logged in
 if (!isset($_SESSION['isLoggedIn']) || !$_SESSION['isLoggedIn'] || $_SESSION['role'] !== 'admin') {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 
@@ -24,6 +24,8 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <script>emailjs.init("GRi35_90k4gj9Es_f");</script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -148,7 +150,7 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             background: white;
             border-radius: 1.5rem;
             max-width: 95%;
-            width: 900px;
+            width: 1100px;
             max-height: 90vh;
             overflow-y: auto;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
@@ -353,11 +355,14 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <!-- Detail Modal -->
     <div id="detailModal" class="detail-modal" onclick="closeDetailModal(event)">
-        <div class="detail-modal-content w-full max-w-2xl" onclick="event.stopPropagation()">
-            <div class="p-6 border-b border-gray-200">
+        <div class="detail-modal-content w-full max-w-4xl" onclick="event.stopPropagation()">
+            <div class="p-8 border-b border-gray-200 bg-gradient-to-r from-[#800000] to-[#a00000]">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-xl font-semibold text-[#800000]">Student Verification Details</h2>
-                    <button onclick="closeDetailModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white mb-1">Student Verification Review</h2>
+                        <p class="text-gray-200 text-sm">Review student information and school ID before verification</p>
+                    </div>
+                    <button onclick="closeDetailModal()" class="text-white hover:text-gray-200 transition-colors bg-white/10 hover:bg-white/20 rounded-full w-10 h-10 flex items-center justify-center">
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
@@ -367,24 +372,26 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <!-- Content will be populated by JavaScript -->
             </div>
             
-            <div class="p-6 border-t border-gray-200 bg-gradient-to-br from-gray-50 to-gray-100 rounded-b-2xl">
-                <div class="flex flex-col sm:flex-row gap-3">
+            <div class="p-6 border-t border-gray-200 bg-gray-50 rounded-b-2xl">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <button 
                         id="verifyBtn"
-                        class="flex-1 btn-verify text-white px-6 py-3.5 rounded-xl font-semibold flex items-center justify-center"
+                        class="btn-verify text-white px-6 py-4 rounded-xl font-semibold flex items-center justify-center text-base"
                     >
-                        <i class="fas fa-shield-check mr-2"></i>Verify Student
+                        <i class="fas fa-shield-check mr-2 text-lg"></i>Verify & Approve
                     </button>
                     <button 
                         id="rejectBtn"
-                        class="flex-1 btn-reject text-white px-6 py-3.5 rounded-xl font-semibold flex items-center justify-center"
+                        class="btn-reject text-white px-6 py-4 rounded-xl font-semibold flex items-center justify-center text-base"
                     >
-                        <i class="fas fa-times-circle mr-2"></i>Reject Application
+                        <i class="fas fa-times-circle mr-2 text-lg"></i>Reject Application
                     </button>
                 </div>
-                <p class="text-xs text-gray-600 text-center mt-4 font-medium">
-                    <i class="fas fa-info-circle mr-1"></i>Verified students can submit complaints and report lost items
-                </p>
+                <div class="mt-4 bg-blue-50 border border-blue-200 rounded-xl p-3">
+                    <p class="text-xs text-blue-800 text-center font-medium flex items-center justify-center">
+                        <i class="fas fa-info-circle mr-2"></i>Verified students can submit complaints and report lost items
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -401,6 +408,65 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }, $unverified_students)) ?>;
         
         let currentStudent = null;
+
+        // Function to send email notification
+        function sendEmailNotification(email, studentName, isVerified) {
+            return new Promise((resolve, reject) => {
+                const subject = isVerified ? 
+                    'Account Verified - EMEMHS Guidance System' : 
+                    'Account Verification Status - EMEMHS Guidance System';
+                
+                const message = isVerified ? 
+                    `Dear ${studentName},
+
+Congratulations! Your account has been successfully verified by the EMEMHS Guidance Office.
+
+You can now access all features of the Guidance System:
+• Submit complaints and concerns
+• Report lost items
+• Schedule counseling sessions
+• View your complaint history
+
+Please log in to your account to get started.
+
+If you have any questions, please contact the Guidance Office.
+
+Best regards,
+EMEMHS Guidance Office` :
+                    `Dear ${studentName},
+
+We regret to inform you that your account verification was not approved by the EMEMHS Guidance Office.
+
+This may be due to:
+• Unclear or invalid school ID image
+• Incomplete information
+• Verification requirements not met
+
+Please contact the Guidance Office for more information or to resubmit your application.
+
+Best regards,
+EMEMHS Guidance Office`;
+
+                var params = {
+                    sendername: "EMEMHS Guidance System",
+                    to: email,
+                    subject: subject,
+                    replyto: "guidance@ememhs.edu.ph",
+                    message: message
+                };
+
+                console.log('Sending email with params:', params);
+
+                emailjs.send("service_8jh4949", "template_gr1vonw", params)
+                    .then(function (response) {
+                        console.log('Email sent successfully:', response);
+                        resolve(response);
+                    }, function (error) {
+                        console.error('Email send error:', error);
+                        reject(error);
+                    });
+            });
+        }
 
         function openImageModal(imageSrc) {
             document.getElementById('modalImage').src = imageSrc;
@@ -426,51 +492,116 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             // Populate modal content
             detailContent.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-4">
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-700 mb-2">Personal Information</h3>
-                            <div class="bg-white rounded-xl p-4 border border-gray-200 space-y-2">
-                                <p class="text-sm"><span class="font-medium">Full Name:</span> ${student.first_name} ${student.middle_name || ''} ${student.last_name}</p>
-                                <p class="text-sm"><span class="font-medium">Grade & Section:</span> Grade ${student.grade_level} - Section ${student.section}</p>
-                                <p class="text-sm"><span class="font-medium">Address:</span> ${student.address || 'Not provided'}</p>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Left Column: Student Information -->
+                    <div class="space-y-6">
+                        <!-- Personal Information Card -->
+                        <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-[#800000] to-[#a00000] rounded-xl flex items-center justify-center mr-3">
+                                    <i class="fas fa-user text-white"></i>
+                                </div>
+                                <h3 class="text-base font-semibold text-gray-900">Personal Information</h3>
+                            </div>
+                            <div class="space-y-3">
+                                <div class="flex items-start">
+                                    <div class="w-24 flex-shrink-0">
+                                        <p class="info-label">Full Name</p>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="info-value">${student.first_name} ${student.middle_name ? student.middle_name + ' ' : ''}${student.last_name}</p>
+                                    </div>
+                                </div>
+                                <div class="h-px bg-gray-200"></div>
+                                <div class="flex items-start">
+                                    <div class="w-24 flex-shrink-0">
+                                        <p class="info-label">Grade Level</p>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="info-value">Grade ${student.grade_level}</p>
+                                    </div>
+                                </div>
+                                <div class="h-px bg-gray-200"></div>
+                                <div class="flex items-start">
+                                    <div class="w-24 flex-shrink-0">
+                                        <p class="info-label">Section</p>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="info-value">${student.section}</p>
+                                    </div>
+                                </div>
+                                <div class="h-px bg-gray-200"></div>
+                                <div class="flex items-start">
+                                    <div class="w-24 flex-shrink-0">
+                                        <p class="info-label">Address</p>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="info-value">${student.address || 'Not provided'}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-700 mb-2">Contact Information</h3>
-                            <div class="bg-white rounded-xl p-4 border border-gray-200 space-y-2">
-                                <p class="text-sm"><span class="font-medium">Email:</span> ${student.email}</p>
-                                <p class="text-sm"><span class="font-medium">Phone:</span> ${student.phone_number}</p>
+                        <!-- Contact Information Card -->
+                        <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-3">
+                                    <i class="fas fa-address-book text-white"></i>
+                                </div>
+                                <h3 class="text-base font-semibold text-gray-900">Contact Information</h3>
                             </div>
-                        </div>
-                        
-                        <div>
-                            <h3 class="text-sm font-medium text-gray-700 mb-2">Parent/Guardian</h3>
-                            <div class="bg-white rounded-xl p-4 border border-gray-200 space-y-2">
-                                <p class="text-sm"><span class="font-medium">Name:</span> ${student.parent_name}</p>
-                                <p class="text-sm"><span class="font-medium">Contact:</span> ${student.contact_number}</p>
+                            <div class="space-y-3">
+                                <div class="flex items-start">
+                                    <div class="w-20 flex-shrink-0">
+                                        <p class="info-label">Email</p>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="info-value break-all">${student.email}</p>
+                                    </div>
+                                </div>
+                                <div class="h-px bg-gray-200"></div>
+                                <div class="flex items-start">
+                                    <div class="w-20 flex-shrink-0">
+                                        <p class="info-label">Phone</p>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="info-value">${student.phone_number}</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-700 mb-2">School ID Verification</h3>
-                        <div class="bg-white rounded-xl p-4 border border-gray-200">
-                            ${student.school_id_image_base64 ? `
-                                <img 
-                                    src="data:${student.school_id_mime_type};base64,${student.school_id_image_base64}" 
-                                    alt="School ID" 
-                                    class="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
-                                    onclick="openImageModal(this.src)"
-                                >
-                                <p class="text-xs text-gray-500 mt-2 text-center">Click image to view full size</p>
-                            ` : `
-                                <div class="text-center py-8">
-                                    <i class="fas fa-image text-gray-400 text-3xl mb-2"></i>
-                                    <p class="text-sm text-gray-500">No school ID image uploaded</p>
+                    <!-- Right Column: School ID -->
+                    <div class="space-y-6">
+                        <div class="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 shadow-sm h-full">
+                            <div class="flex items-center mb-4">
+                                <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center mr-3">
+                                    <i class="fas fa-id-card text-white"></i>
                                 </div>
-                            `}
+                                <h3 class="text-base font-semibold text-gray-900">School ID Verification</h3>
+                            </div>
+                            <div class="bg-white rounded-xl p-4 border-2 border-dashed border-gray-300">
+                                ${student.school_id_image_base64 ? `
+                                    <img 
+                                        src="data:${student.school_id_mime_type};base64,${student.school_id_image_base64}" 
+                                        alt="School ID" 
+                                        class="w-full rounded-lg cursor-pointer hover:opacity-90 transition-all hover:shadow-lg"
+                                        onclick="openImageModal(this.src)"
+                                    >
+                                    <div class="mt-3 text-center">
+                                        <p class="text-xs text-gray-500">
+                                            <i class="fas fa-search-plus mr-1"></i>Click image to view full size
+                                        </p>
+                                    </div>
+                                ` : `
+                                    <div class="text-center py-12">
+                                        <i class="fas fa-image text-gray-300 text-4xl mb-3"></i>
+                                        <p class="text-sm text-gray-500 font-medium">No school ID image uploaded</p>
+                                        <p class="text-xs text-gray-400 mt-1">Student did not provide verification image</p>
+                                    </div>
+                                `}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -479,8 +610,8 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // Reset button state
             verifyBtn.disabled = false;
             rejectBtn.disabled = false;
-            verifyBtn.innerHTML = '<i class="fas fa-shield-check mr-2"></i>Verify Student';
-            rejectBtn.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Reject Application';
+            verifyBtn.innerHTML = '<i class="fas fa-shield-check mr-2 text-lg"></i>Verify & Approve';
+            rejectBtn.innerHTML = '<i class="fas fa-times-circle mr-2 text-lg"></i>Reject Application';
             
             // Set up button event listeners
             verifyBtn.onclick = () => verifyStudent(student.id, true);
@@ -527,12 +658,47 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     // Check if response is actually JSON
                     const contentType = response.headers.get('content-type');
                     if (!contentType || !contentType.includes('application/json')) {
-                        throw new Error('Server returned non-JSON response. Status: ' + response.status);
+                        // Get the response text to see what was returned
+                        return response.text().then(text => {
+                            console.error('Non-JSON response received:', text);
+                            throw new Error('Server returned non-JSON response. Response: ' + text.substring(0, 200));
+                        });
                     }
                     return response.json();
                 })
                 .then(data => {
                     if (data.success) {
+                        console.log('Verification response:', data);
+                        
+                        // Send email notification using data from backend
+                        if (data.student_email && data.student_name) {
+                            console.log('Attempting to send email to:', data.student_email);
+                            console.log('Student name:', data.student_name);
+                            console.log('Verification status:', isVerified);
+                            
+                            sendEmailNotification(data.student_email, data.student_name, isVerified)
+                                .then(() => {
+                                    console.log('Email notification sent successfully');
+                                    showNotification(
+                                        isVerified ? 'Student verified successfully! Email notification sent.' : 'Student rejected successfully! Email notification sent.',
+                                        isVerified ? 'success' : 'info'
+                                    );
+                                })
+                                .catch((error) => {
+                                    console.error('Failed to send email notification:', error);
+                                    showNotification(
+                                        isVerified ? 'Student verified successfully! (Email notification failed)' : 'Student rejected successfully! (Email notification failed)',
+                                        'warning'
+                                    );
+                                });
+                        } else {
+                            console.error('No email or name in response:', data);
+                            showNotification(
+                                isVerified ? 'Student verified successfully! (No email address available)' : 'Student rejected successfully! (No email address available)',
+                                'warning'
+                            );
+                        }
+                        
                         // Close modal
                         closeDetailModal();
                         
@@ -550,25 +716,21 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     // Remove from studentsData array
                                     studentsData.splice(studentsData.findIndex(s => s.id === studentId), 1);
                                     
-                                    // Check if no more cards exist
+                                    // Check if no more cards exist - don't reload immediately
                                     if (studentsData.length === 0) {
-                                        location.reload(); // Reload to show "all verified" message
+                                        setTimeout(() => {
+                                            location.reload(); // Reload after delay to allow email to send
+                                        }, 2000);
                                     }
                                 }, 500);
                             }
                         });
-                        
-                        // Show success message
-                        showNotification(
-                            isVerified ? 'Student verified successfully!' : 'Student rejected successfully!',
-                            isVerified ? 'success' : 'info'
-                        );
                     } else {
                         // Re-enable buttons on error
                         verifyBtn.disabled = false;
                         rejectBtn.disabled = false;
-                        verifyBtn.innerHTML = '<i class="fas fa-shield-check mr-2"></i>Verify Student';
-                        rejectBtn.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Reject Application';
+                        verifyBtn.innerHTML = '<i class="fas fa-shield-check mr-2 text-lg"></i>Verify & Approve';
+                        rejectBtn.innerHTML = '<i class="fas fa-times-circle mr-2 text-lg"></i>Reject Application';
                         
                         showNotification('Error: ' + data.message, 'error');
                     }
@@ -579,8 +741,8 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     // Re-enable buttons on error
                     verifyBtn.disabled = false;
                     rejectBtn.disabled = false;
-                    verifyBtn.innerHTML = '<i class="fas fa-shield-check mr-2"></i>Verify Student';
-                    rejectBtn.innerHTML = '<i class="fas fa-times-circle mr-2"></i>Reject Application';
+                    verifyBtn.innerHTML = '<i class="fas fa-shield-check mr-2 text-lg"></i>Verify & Approve';
+                    rejectBtn.innerHTML = '<i class="fas fa-times-circle mr-2 text-lg"></i>Reject Application';
                     
                     showNotification('Error: ' + error.message, 'error');
                 });
@@ -593,12 +755,17 @@ $unverified_students = $stmt->fetchAll(PDO::FETCH_ASSOC);
             notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 transform translate-x-full`;
             
             const bgColor = type === 'success' ? 'bg-green-500' : 
-                           type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+                           type === 'error' ? 'bg-red-500' : 
+                           type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500';
+            
+            const icon = type === 'success' ? 'check' : 
+                        type === 'error' ? 'exclamation-triangle' : 
+                        type === 'warning' ? 'exclamation-circle' : 'info';
             
             notification.className += ` ${bgColor} text-white`;
             notification.innerHTML = `
                 <div class="flex items-center">
-                    <i class="fas fa-${type === 'success' ? 'check' : type === 'error' ? 'exclamation-triangle' : 'info'} mr-2"></i>
+                    <i class="fas fa-${icon} mr-2"></i>
                     <span>${message}</span>
                 </div>
             `;

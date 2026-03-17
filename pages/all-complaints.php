@@ -5,7 +5,7 @@ require_once '../logic/db_connection.php';
 
 // Check if staff is logged in
 if (!$_SESSION['isLoggedIn']) {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 
@@ -295,7 +295,7 @@ foreach ($all_complaints as $complaint) {
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th scope="col" class="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200" id="complaintsTableBody">
@@ -353,18 +353,22 @@ foreach ($all_complaints as $complaint) {
                                             ?>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <button class="bg-[#800000] hover:bg-[#600000] text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center gap-2 view-complaint-btn"
-                                                    data-complaint='<?php
-                                                        $complaintData = $complaint;
-                                                        unset($complaintData['evidence']);
-                                                        unset($complaintData['mime_type']);
-                                                        echo json_encode($complaintData);
-                                                    ?>'
-                                                    data-evidence='<?php echo !empty($complaint['evidence']) ? base64_encode($complaint['evidence']) : ''; ?>'
-                                                    data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'>
-                                                <i class="fas fa-eye"></i>
-                                                View Details
-                                            </button>
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors duration-200 group relative view-complaint-btn"
+                                                        data-complaint='<?php
+                                                            $complaintData = $complaint;
+                                                            unset($complaintData['evidence']);
+                                                            unset($complaintData['mime_type']);
+                                                            echo json_encode($complaintData);
+                                                        ?>'
+                                                        data-evidence='<?php echo !empty($complaint['evidence']) ? base64_encode($complaint['evidence']) : ''; ?>'
+                                                        data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'>
+                                                    <i class="fas fa-eye"></i>
+                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                        View Details
+                                                    </span>
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 <?php endforeach; ?>

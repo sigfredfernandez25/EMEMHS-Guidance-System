@@ -11,8 +11,6 @@ try {
     $section = trim($_POST['section']);
     $email = trim($_POST['email']);
     $phone = trim($_POST['phone']);
-    $parent_name = trim($_POST['parent_name']);
-    $parent_contact = trim($_POST['parent_contact']);
     $password = $_POST['password'];
     $address = trim($_POST['address']);
 
@@ -39,10 +37,6 @@ try {
     // Validate phone numbers (must be 11 digits starting with 09)
     if (!preg_match('/^09[0-9]{9}$/', $phone)) {
         throw new Exception("Invalid phone number format. Must be 11 digits starting with 09 (e.g., 09123456789)");
-    }
-    
-    if (!preg_match('/^09[0-9]{9}$/', $parent_contact)) {
-        throw new Exception("Invalid parent/guardian contact number format. Must be 11 digits starting with 09 (e.g., 09123456789)");
     }
 
     // Validate email format
@@ -92,11 +86,11 @@ try {
     ]);
     $student_id = $pdo->lastInsertId();
  
-    // Insert parent
+    // Insert parent with NULL values (to be filled by admin later)
     $stmt = $pdo->prepare(SQL_INSERT_PARENT);
     $stmt->execute([
-        $parent_name,
-        $parent_contact,
+        null,
+        null,
         $student_id
     ]);
     

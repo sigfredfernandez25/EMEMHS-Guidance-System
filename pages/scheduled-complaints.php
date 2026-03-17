@@ -5,7 +5,7 @@ require_once '../logic/db_connection.php';
 
 // Check if staff is logged in
 if (!$_SESSION['isLoggedIn']) {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 
@@ -200,15 +200,14 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grade & Section</th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Complaint Type</th>
                                 <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Time</th>
-                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                <th scope="col" class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scheduled Date & Time</th>
+                                <th scope="col" class="px-6 py-4 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200" id="complaintsTableBody">
                             <?php if (!empty($scheduled_complaints)): ?>
                                 <?php foreach ($scheduled_complaints as $complaint): ?>
-                                    <tr class="table-row">
+                                    <tr class="table-row" data-student-id="<?= $complaint['student_id'] ?>">
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo htmlspecialchars($complaint['first_name']." ".$complaint['last_name']); ?></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo htmlspecialchars($complaint['grade_level']." ".$complaint['section']); ?></td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><?php echo htmlspecialchars($complaint['type']); ?></td>
@@ -229,40 +228,46 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <div class="flex items-center">
-                                                <i class="fas fa-calendar-alt text-[#800000] mr-2"></i>
-                                                <?php echo htmlspecialchars($complaint['scheduled_date']); ?>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <div class="flex items-center">
-                                                <i class="fas fa-clock text-[#800000] mr-2"></i>
-                                                <?php echo htmlspecialchars($complaint['scheduled_time']); ?>
+                                            <div class="flex flex-col">
+                                                <div class="flex items-center mb-1">
+                                                    <i class="fas fa-calendar-alt text-[#800000] mr-2"></i>
+                                                    <?php echo htmlspecialchars($complaint['scheduled_date']); ?>
+                                                </div>
+                                                <div class="flex items-center text-gray-600">
+                                                    <i class="fas fa-clock text-[#800000] mr-2"></i>
+                                                    <?php echo htmlspecialchars($complaint['scheduled_time']); ?>
+                                                </div>
                                             </div>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <div class="flex items-center gap-2">
-                                                <button class="send-parent-sms-btn bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center gap-2"
+                                            <div class="flex items-center justify-center gap-2">
+                                                <button class="send-parent-sms-btn bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-colors duration-200 group relative"
                                                         data-complaint-id="<?= $complaint['id'] ?>"
                                                         title="Send SMS to Parent">
                                                     <i class="fas fa-sms"></i>
-                                                    SMS Parent
+                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                        SMS Parent
+                                                    </span>
                                                 </button>
-                                                <button class="reschedule-btn bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center gap-2" 
+                                                <button class="reschedule-btn bg-orange-600 hover:bg-orange-700 text-white p-2 rounded-lg transition-colors duration-200 group relative" 
                                                         data-complaint-id="<?= $complaint['id'] ?>"
                                                         data-current-date="<?= $complaint['scheduled_date'] ?>"
                                                         data-current-time="<?= $complaint['scheduled_time'] ?>">
                                                     <i class="fas fa-calendar-alt"></i>
-                                                    Reschedule
+                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                        Reschedule
+                                                    </span>
                                                 </button>
                                                 <form action="mark_resolved.php" method="POST" class="inline">
                                                     <input type="hidden" name="complaint_id" value="<?= $complaint['id'] ?>">
-                                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center gap-2">
+                                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition-colors duration-200 group relative">
                                                         <i class="fas fa-check-circle"></i>
-                                                        Mark as Resolved
+                                                        <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                            Mark as Resolved
+                                                        </span>
                                                     </button>
                                                 </form>
-                                                <button class="view-complaint bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200 flex items-center gap-2"
+                                                <button class="view-complaint bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors duration-200 group relative"
                                                         data-complaint='<?php 
                                                             $complaintData = $complaint;
                                                             unset($complaintData['evidence']);
@@ -272,7 +277,9 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                         data-evidence='<?php echo !empty($complaint['evidence']) ? base64_encode($complaint['evidence']) : ''; ?>'
                                                         data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'>
                                                     <i class="fas fa-eye"></i>
-                                                    View Details
+                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                        View Details
+                                                    </span>
                                                 </button>
                                             </div>
                                         </td>
@@ -280,7 +287,7 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="7" class="px-6 py-12 text-center">
+                                    <td colspan="6" class="px-6 py-12 text-center">
                                         <div class="flex flex-col items-center">
                                             <i class="fas fa-calendar-times text-4xl text-gray-300 mb-4"></i>
                                             <h3 class="text-lg font-medium text-gray-900 mb-2">No Scheduled Complaints</h3>
@@ -819,43 +826,184 @@ EMEMHS Guidance Office`;
     document.querySelectorAll('.send-parent-sms-btn').forEach(button => {
         button.addEventListener('click', async function() {
             const complaintId = this.dataset.complaintId;
-            const originalText = this.innerHTML;
             
-            if (!confirm('Send SMS notification to parent about this scheduled session?')) {
+            // Get the row to find student ID
+            const row = this.closest('tr');
+            const studentId = row?.getAttribute('data-student-id');
+            
+            if (!studentId) {
+                alert('Student information not found');
                 return;
             }
-            
-            // Disable button and show loading
-            this.disabled = true;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Sending...';
-            
+
+            // Fetch existing parent information from database
             try {
-                const formData = new FormData();
-                formData.append('complaint_id', complaintId);
-                
-                const response = await fetch('../logic/send_parent_sms.php', {
-                    method: 'POST',
-                    body: formData
-                });
-                
+                const response = await fetch('../logic/get_parent_info.php?student_id=' + studentId);
                 const data = await response.json();
                 
-                if (data.success) {
-                    alert(`SMS sent successfully to ${data.details.parent_name}`);
+                if (data.success && data.parent) {
+                    // Pre-fill the form with existing parent data
+                    document.getElementById('parentName').value = data.parent.parent_name || '';
+                    document.getElementById('parentPhone').value = data.parent.contact_number || '';
+                    
+                    // Update modal title to indicate data is from database
+                    const modalTitle = document.querySelector('#parentInfoModal h3');
+                    if (data.parent.parent_name && data.parent.contact_number) {
+                        modalTitle.innerHTML = '<i class="fas fa-user-tie"></i> Parent/Guardian Information (Existing)';
+                        document.querySelector('#parentInfoModal p').textContent = 'Parent/guardian details found in system. Review and send SMS notification.';
+                    }
                 } else {
-                    alert(`Failed to send SMS: ${data.message}`);
+                    // No existing parent data, show empty form
+                    document.getElementById('parentName').value = '';
+                    document.getElementById('parentPhone').value = '';
+                    const modalTitle = document.querySelector('#parentInfoModal h3');
+                    modalTitle.innerHTML = '<i class="fas fa-user-tie"></i> Parent/Guardian Information';
+                    document.querySelector('#parentInfoModal p').textContent = 'Please enter parent/guardian details to send SMS notification';
                 }
             } catch (error) {
-                console.error('Error sending SMS:', error);
-                alert('An error occurred while sending SMS');
-            } finally {
-                // Re-enable button
-                this.disabled = false;
-                this.innerHTML = originalText;
+                console.error('Error fetching parent info:', error);
+                // Continue with empty form if fetch fails
+                document.getElementById('parentName').value = '';
+                document.getElementById('parentPhone').value = '';
             }
+            
+            // Open parent info modal
+            document.getElementById('parentInfoModal').classList.remove('hidden');
+            document.getElementById('parentComplaintId').value = complaintId;
         });
     });
 });
 </script>
+
+    <!-- Parent Information Modal -->
+    <div id="parentInfoModal" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm overflow-y-auto hidden z-50">
+        <div class="relative top-20 mx-auto p-6 w-[28rem] bg-white rounded-2xl shadow-xl transform transition-all">
+            <div class="pb-4 border-b border-gray-100">
+                <h3 class="text-xl font-semibold text-[#800000] flex items-center gap-2">
+                    <i class="fas fa-user-tie"></i>
+                    Parent/Guardian Information
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Please enter parent/guardian details to send SMS notification</p>
+            </div>
+            <form id="parentInfoForm" class="py-6 space-y-4">
+                <div>
+                    <label for="parentName" class="block text-sm font-medium text-gray-700 mb-2">Parent/Guardian Name</label>
+                    <input type="text" id="parentName" name="parent_name" required
+                        class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 transition duration-200 ease-in-out"
+                        placeholder="Enter parent/guardian name">
+                </div>
+                <div>
+                    <label for="parentPhone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                    <input type="tel" id="parentPhone" name="contact_number" required pattern="09[0-9]{9}" maxlength="11"
+                        class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 transition duration-200 ease-in-out"
+                        placeholder="09XXXXXXXXX">
+                    <p class="text-xs text-gray-500 mt-1">Format: 09XXXXXXXXX (11 digits)</p>
+                    <span id="phoneError" class="text-xs text-red-600 mt-1 block"></span>
+                </div>
+                <input type="hidden" id="parentComplaintId" name="complaint_id">
+            </form>
+            <div class="pt-4 border-t border-gray-100 flex justify-end gap-3">
+                <button id="cancelParentInfo" class="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition duration-200 flex items-center gap-2">
+                    <i class="fas fa-times"></i>
+                    Cancel
+                </button>
+                <button id="saveAndSendSMS" class="px-4 py-2.5 rounded-xl bg-[#800000] text-white hover:bg-[#900000] transition duration-200 flex items-center gap-2">
+                    <i class="fas fa-paper-plane"></i>
+                    Save & Send SMS
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Parent Info Modal handlers
+        const parentInfoModal = document.getElementById('parentInfoModal');
+        const parentInfoForm = document.getElementById('parentInfoForm');
+        const cancelParentInfo = document.getElementById('cancelParentInfo');
+        const saveAndSendSMS = document.getElementById('saveAndSendSMS');
+        const parentPhone = document.getElementById('parentPhone');
+        const phoneError = document.getElementById('phoneError');
+
+        // Validate phone number
+        parentPhone.addEventListener('input', function() {
+            const value = this.value;
+            const isValid = /^09[0-9]{9}$/.test(value);
+            
+            if (value && !isValid) {
+                phoneError.textContent = 'Invalid format. Must be 09XXXXXXXXX (11 digits)';
+                saveAndSendSMS.disabled = true;
+                saveAndSendSMS.style.opacity = '0.5';
+            } else {
+                phoneError.textContent = '';
+                saveAndSendSMS.disabled = false;
+                saveAndSendSMS.style.opacity = '1';
+            }
+        });
+
+        // Cancel button
+        cancelParentInfo.addEventListener('click', function() {
+            parentInfoModal.classList.add('hidden');
+            parentInfoForm.reset();
+        });
+
+        // Save and Send SMS
+        saveAndSendSMS.addEventListener('click', async function() {
+            const parentName = document.getElementById('parentName').value.trim();
+            const contactNumber = document.getElementById('parentPhone').value.trim();
+            const complaintId = document.getElementById('parentComplaintId').value;
+
+            // Validate inputs
+            if (!parentName) {
+                alert('Please enter parent/guardian name');
+                return;
+            }
+
+            if (!contactNumber || !/^09[0-9]{9}$/.test(contactNumber)) {
+                alert('Please enter a valid phone number (09XXXXXXXXX)');
+                return;
+            }
+
+            // Show loading state
+            const originalText = saveAndSendSMS.innerHTML;
+            saveAndSendSMS.disabled = true;
+            saveAndSendSMS.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+            try {
+                const formData = new FormData();
+                formData.append('complaint_id', complaintId);
+                formData.append('parent_name', parentName);
+                formData.append('contact_number', contactNumber);
+
+                const response = await fetch('../logic/save_parent_and_send_sms.php', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✓ Parent info saved and SMS sent successfully to ${data.details.parent_name}`);
+                    parentInfoModal.classList.add('hidden');
+                    parentInfoForm.reset();
+                } else {
+                    alert(`✗ Error: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            } finally {
+                saveAndSendSMS.disabled = false;
+                saveAndSendSMS.innerHTML = originalText;
+            }
+        });
+
+        // Close modal when clicking outside
+        parentInfoModal.addEventListener('click', function(e) {
+            if (e.target === parentInfoModal) {
+                parentInfoModal.classList.add('hidden');
+                parentInfoForm.reset();
+            }
+        });
+    </script>
 </body>
 </html>

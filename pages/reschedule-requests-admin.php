@@ -6,7 +6,7 @@ require_once '../logic/notification_logic.php';
 
 // Check if staff is logged in
 if (!$_SESSION['isLoggedIn']) {
-    header("Location: index.php");
+    header("Location: login.php");
     exit();
 }
 

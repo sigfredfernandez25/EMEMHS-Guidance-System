@@ -184,25 +184,6 @@
 
                         <!-- Right Column -->
                         <div class="space-y-6">
-                            <!-- Parent/Guardian Information Section -->
-                            <div class="form-section">
-                                <h2 class="section-title text-lg font-semibold mb-4">Parent/Guardian Information</h2>
-                                <div class="space-y-4">
-                                    <div>
-                                        <label for="parent_name" class="block text-sm font-medium text-gray-700 mb-1">Parent/Guardian Name</label>
-                                        <input type="text" id="parent_name" name="parent_name" required
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
-                                    </div>
-
-                                    <div>
-                                        <label for="parent_contact" class="block text-sm font-medium text-gray-700 mb-1">Parent/Guardian Contact Number</label>
-                                        <input type="tel" id="parent_contact" name="parent_contact" pattern="09[0-9]{9}" maxlength="11" placeholder="09XXXXXXXXX" oninput="validatePhoneNumber('parent_contact')" required
-                                            class="w-full px-4 py-3 border border-gray-300 rounded-xl input-focus focus:border-[#800000] focus:ring-2 focus:ring-[#800000]/20 outline-none">
-                                        <span id="parent_contact_status" class="text-xs text-red-600 mt-1 block"></span>
-                                    </div>
-                                </div>
-                            </div>
-
                             <!-- Account Security Section -->
                             <div class="form-section">
                                 <h2 class="section-title text-lg font-semibold mb-4">Account Security</h2>
@@ -259,8 +240,8 @@
 
                     <!-- Submit Button -->
                     <div class="flex justify-center pt-4 border-t border-gray-200 mt-6">
-                        <button type="submit" id="register"
-                            class="btn-primary px-8 py-3 text-white font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2">
+                        <button type="submit" id="register" disabled
+                            class="btn-primary px-8 py-3 text-white font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2 opacity-50 cursor-not-allowed">
                             Create Account
                         </button>
                     </div>
@@ -278,7 +259,6 @@
             const lengthCheck = document.getElementById('length-check');
             const specialCheck = document.getElementById('special-check');
             const matchStatus = document.getElementById('password_match_status');
-            const registerButton = document.getElementById('register');
             
             // Check password length
             const hasMinLength = password.length >= 6;
@@ -307,54 +287,46 @@
                 matchStatus.textContent = '';
             }
             
-            // Enable/disable register button based on all validations
-            const isPasswordValid = hasMinLength && hasSpecialChar && password === confirmPassword;
-            registerButton.disabled = !isPasswordValid;
-            registerButton.className = `btn-primary px-8 py-3 text-white font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2 ${!isPasswordValid ? 'opacity-50 cursor-not-allowed' : ''}`;
+            // Check all validations
+            checkAllValidations();
         }
 
         // Add form submission validation
-        document.querySelector('form').addEventListener('submit', function(e) {
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirm_password').value;
-            
-            if (password.length < 6 || !/[!@#$%^&*]/.test(password) || password !== confirmPassword) {
-                e.preventDefault();
-                alert('Please ensure your password meets all requirements and matches the confirmation.');
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const password = document.getElementById('password').value;
+                const confirmPassword = document.getElementById('confirm_password').value;
+                
+                if (password.length < 6 || !/[!@#$%^&*]/.test(password) || password !== confirmPassword) {
+                    e.preventDefault();
+                    alert('Please ensure your password meets all requirements and matches the confirmation.');
+                }
+            });
         });
         function confirmPassword() {
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('confirm_password').value;
-    const registerButton = document.getElementById('register');
-    const passwordMatchStatus = document.getElementById('password_match_status');
-    // Only check if both fields have values
-    if (password && confirmPassword) {
-        if (password !== confirmPassword) {
-            document.getElementById('confirm_password').style.border = '2px solid red';
-            registerButton.disabled = true;
-            registerButton.style.opacity = '0.5'; // Visual feedback
-            registerButton.title = 'Passwords do not match'; // Tooltip message
-            passwordMatchStatus.textContent = 'Passwords do not match';
-            passwordMatchStatus.style.color = 'red';
-        } else {
-            document.getElementById('confirm_password').style.border = '2px solid green';
-            registerButton.disabled = false;
-            registerButton.style.opacity = '1';
-            registerButton.title = ''; // Remove tooltip
-            passwordMatchStatus.textContent = '';
-            passwordMatchStatus.textContent = 'Passwords matched';
-            passwordMatchStatus.style.color = 'green';
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm_password').value;
+            const passwordMatchStatus = document.getElementById('password_match_status');
+            
+            // Only check if both fields have values
+            if (password && confirmPassword) {
+                if (password !== confirmPassword) {
+                    document.getElementById('confirm_password').style.border = '2px solid red';
+                    passwordMatchStatus.textContent = 'Passwords do not match';
+                    passwordMatchStatus.style.color = 'red';
+                } else {
+                    document.getElementById('confirm_password').style.border = '2px solid green';
+                    passwordMatchStatus.textContent = 'Passwords matched';
+                    passwordMatchStatus.style.color = 'green';
+                }
+            } else {
+                // Reset states if either field is empty
+                document.getElementById('confirm_password').style.border = '1px solid #d1d5db';
+                passwordMatchStatus.textContent = '';
+            }
+            
+            checkAllValidations();
         }
-    } else {
-        // Reset states if either field is empty
-        document.getElementById('confirm_password').style.border = '1px solid #d1d5db';
-        registerButton.disabled = false;
-        registerButton.style.opacity = '1';
-        registerButton.title = '';
-        passwordMatchStatus.textContent = '';
-    }
-}
 
         let emailAvailable = false; // Track if email is available
 
@@ -437,32 +409,24 @@
             const code = document.getElementById('code').value;
             const realCode = localStorage.getItem("code");
             const codeStatus = document.getElementById('code_status');
-            const registerButton = document.getElementById('register');
+            
             if (code) {
                 if (realCode !== code) {
                     document.getElementById('code').style.border = '2px solid red';
-                    registerButton.disabled = true;
-                    registerButton.style.opacity = '0.5'; // Visual feedback
-                    registerButton.title = 'verification code is incorrect'; // Tooltip message
-                    codeStatus.textContent = 'verification code is incorrect';
+                    codeStatus.textContent = 'Verification code is incorrect';
                     codeStatus.style.color = 'red';
                 } else {
                     document.getElementById('code').style.border = '2px solid green';
-                    registerButton.disabled = false;
-                    registerButton.style.opacity = '1';
-                    registerButton.title = ''; // Remove tooltip
-                    codeStatus.textContent = '';
-                    codeStatus.textContent = 'verification code is correct';
+                    codeStatus.textContent = 'Verification code is correct';
                     codeStatus.style.color = 'green';
                 }
             } else {
-                // Reset states if either field is empty
+                // Reset states if field is empty
                 document.getElementById('code').style.border = '1px solid #d1d5db';
-                registerButton.disabled = false;
-                registerButton.style.opacity = '1';
-                registerButton.title = '';
                 codeStatus.textContent = '';
             }
+            
+            checkAllValidations();
         }
         function executeSendCode() {
             const email = document.getElementById('email').value;
@@ -539,7 +503,6 @@
         function validatePhoneNumber(fieldId) {
             const phoneInput = document.getElementById(fieldId);
             const phoneStatus = document.getElementById(fieldId + '_status');
-            const registerButton = document.getElementById('register');
             const phoneValue = phoneInput.value;
 
             // Remove non-numeric characters
@@ -554,6 +517,7 @@
             if (!numericOnly) {
                 phoneStatus.textContent = '';
                 phoneInput.style.border = '1px solid #d1d5db';
+                checkAllValidations();
                 return;
             }
 
@@ -570,16 +534,13 @@
                 }
                 phoneStatus.style.color = 'red';
                 phoneInput.style.border = '2px solid red';
-                registerButton.disabled = true;
-                registerButton.style.opacity = '0.5';
             } else {
                 phoneStatus.textContent = 'Valid phone number';
                 phoneStatus.style.color = 'green';
                 phoneInput.style.border = '2px solid green';
-                
-                // Re-enable button only if all validations pass
-                checkAllValidations();
             }
+            
+            checkAllValidations();
         }
 
         // Function to check all validations before enabling register button
@@ -588,39 +549,23 @@
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
             const phone = document.getElementById('phone').value;
-            const parentContact = document.getElementById('parent_contact').value;
             const code = document.getElementById('code').value;
             const realCode = localStorage.getItem("code");
 
             // Check all conditions
             const isPasswordValid = password.length >= 6 && /[!@#$%^&*]/.test(password) && password === confirmPassword;
             const isPhoneValid = /^09[0-9]{9}$/.test(phone);
-            const isParentContactValid = /^09[0-9]{9}$/.test(parentContact);
             const isCodeValid = code === realCode;
 
             // Enable button only if all validations pass
-            if (isPasswordValid && isPhoneValid && isParentContactValid && isCodeValid) {
+            if (isPasswordValid && isPhoneValid && isCodeValid) {
                 registerButton.disabled = false;
-                registerButton.style.opacity = '1';
-                registerButton.title = '';
+                registerButton.className = 'btn-primary px-8 py-3 text-white font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2';
             } else {
                 registerButton.disabled = true;
-                registerButton.style.opacity = '0.5';
+                registerButton.className = 'btn-primary px-8 py-3 text-white font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2 opacity-50 cursor-not-allowed';
             }
         }
-
-        // Update existing validation functions to call checkAllValidations
-        const originalValidatePassword = validatePassword;
-        validatePassword = function() {
-            originalValidatePassword();
-            checkAllValidations();
-        };
-
-        const originalValidateCode = validateCode;
-        validateCode = function() {
-            originalValidateCode();
-            checkAllValidations();
-        };
     </script>
 </body>
 </html>

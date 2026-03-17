@@ -78,7 +78,7 @@ $current_page = basename($_SERVER['PHP_SELF']);
                         </svg>
                     </button>
                 <?php else: ?>
-                    <a href="index.php" class="text-sm text-gray-600 hover:text-[#800000] px-3 py-2 <?php echo ($current_page == 'index.php') ? 'text-[#800000] font-medium' : ''; ?>">Login</a>
+                    <a href="login.php" class="text-sm text-gray-600 hover:text-[#800000] px-3 py-2 <?php echo ($current_page == 'login.php') ? 'text-[#800000] font-medium' : ''; ?>">Login</a>
                     <a href="register.php" class="text-sm bg-[#800000] text-white px-4 py-2 rounded-lg hover:bg-[#600000] transition-colors">Register</a>
                 <?php endif; ?>
             </div>
