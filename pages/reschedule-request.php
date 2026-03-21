@@ -355,15 +355,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_reschedule']))
         // Generate time slots
         function generateTimeSlots() {
             const slots = [];
-            const startHour = 8; // 8 AM
-            const endHour = 17; // 5 PM
+            const times = [
+                '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+                '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
+            ];
             
-            for (let hour = startHour; hour <= endHour; hour++) {
-                const time = `${hour}:00`;
-                slots.push(time);
-            }
-            
-            return slots;
+            return times;
         }
 
         // Check time slot availability

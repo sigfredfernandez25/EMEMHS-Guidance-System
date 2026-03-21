@@ -963,19 +963,23 @@ $unread_count = getUnreadNotificationsCount($_SESSION['user']);
             }
 
             // Toggle notifications panel
-            const notificationsButton = document.querySelector('.fa-bell').parentElement;
+            const bellIcon = document.querySelector('.fa-bell');
             const notificationsPanel = document.getElementById('notificationsPanel');
             
-            notificationsButton.addEventListener('click', function() {
-                notificationsPanel.classList.toggle('translate-x-full');
-            });
+            if (bellIcon) {
+                const notificationsButton = bellIcon.parentElement;
+                
+                notificationsButton.addEventListener('click', function() {
+                    notificationsPanel.classList.toggle('translate-x-full');
+                });
 
-            // Close notifications panel when clicking outside
-            document.addEventListener('click', function(event) {
-                if (!notificationsButton.contains(event.target) && !notificationsPanel.contains(event.target)) {
-                    notificationsPanel.classList.add('translate-x-full');
-                }
-            });
+                // Close notifications panel when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!notificationsButton.contains(event.target) && !notificationsPanel.contains(event.target)) {
+                        notificationsPanel.classList.add('translate-x-full');
+                    }
+                });
+            }
 
             // Add click event listeners to all notify buttons
             const notifyButtons = document.querySelectorAll('.notify-btn');

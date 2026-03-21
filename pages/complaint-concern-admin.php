@@ -8,6 +8,25 @@ if (!$_SESSION['isLoggedIn']) {
     header("Location: login.php");
     exit();
 }
+
+// Check if a specific complaint ID is provided
+$specific_complaint_id = isset($_GET['id']) ? intval($_GET['id']) : null;
+$specific_complaint = null;
+
+if ($specific_complaint_id) {
+    // Fetch the specific complaint
+    $stmt = $pdo->prepare("
+        SELECT cc.*,
+               COALESCE(cc.severity, 'medium') as severity,
+               s.first_name, s.last_name, s.grade_level, s.section, s.email
+        FROM " . TBL_COMPLAINTS_CONCERNS . " cc
+        JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
+        WHERE cc.id = ?
+    ");
+    $stmt->execute([$specific_complaint_id]);
+    $specific_complaint = $stmt->fetch(PDO::FETCH_ASSOC);
+}
+
 $stmt = $pdo->prepare("
     SELECT cc.*,
            COALESCE(cc.severity, 'medium') as severity,
@@ -351,6 +370,135 @@ $pending_complaints = count($complaints);
 </head>
 <body class="min-h-screen">
 <?php include 'navigation-admin.php'?>
+
+<!-- Complaint Details Modal -->
+<?php if ($specific_complaint): ?>
+<div id="complaintDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="sticky top-0 bg-gradient-to-r from-[#800000] to-[#a52a2a] text-white p-6 rounded-t-2xl">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold">Complaint Details</h2>
+                    <p class="text-white/80 text-sm mt-1">Complete information about this complaint</p>
+                </div>
+                <button onclick="window.location.href='complaint-concern-admin.php'" class="text-white hover:bg-white/20 rounded-full p-2 transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+        
+        <div class="p-6 space-y-6">
+            <!-- Student Information -->
+            <div class="bg-gray-50 rounded-xl p-4">
+                <h3 class="text-lg font-semibold text-[#800000] mb-3 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+                    </svg>
+                    Student Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Name</p>
+                        <p class="font-medium"><?php echo htmlspecialchars($specific_complaint['first_name'] . ' ' . $specific_complaint['last_name']); ?></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Grade & Section</p>
+                        <p class="font-medium"><?php echo htmlspecialchars($specific_complaint['grade_level'] . ' - ' . $specific_complaint['section']); ?></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Email</p>
+                        <p class="font-medium"><?php echo htmlspecialchars($specific_complaint['email']); ?></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complaint Information -->
+            <div class="bg-gray-50 rounded-xl p-4">
+                <h3 class="text-lg font-semibold text-[#800000] mb-3 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                    Complaint Details
+                </h3>
+                <div class="space-y-3">
+                    <div>
+                        <p class="text-sm text-gray-500">Complaint Type</p>
+                        <p class="font-medium capitalize"><?php echo htmlspecialchars($specific_complaint['complaint_type']); ?></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Severity</p>
+                        <span class="severity-badge severity-<?php echo strtolower($specific_complaint['severity']); ?>">
+                            <?php 
+                            $severity_labels = [
+                                'low' => 'Low Priority',
+                                'medium' => 'Medium Priority',
+                                'high' => 'High Priority',
+                                'urgent' => 'URGENT'
+                            ];
+                            echo htmlspecialchars($severity_labels[$specific_complaint['severity']] ?? ucfirst($specific_complaint['severity']));
+                            ?>
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Status</p>
+                        <span class="status-badge status-<?php echo strtolower($specific_complaint['status']); ?>">
+                            <?php echo htmlspecialchars(ucfirst($specific_complaint['status'])); ?>
+                        </span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Description</p>
+                        <p class="font-medium bg-white p-3 rounded-lg"><?php echo nl2br(htmlspecialchars($specific_complaint['description'])); ?></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Date Created</p>
+                            <p class="font-medium"><?php echo date('F j, Y', strtotime($specific_complaint['date_created'])); ?></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Time Created</p>
+                            <p class="font-medium"><?php echo date('g:i A', strtotime($specific_complaint['time_created'])); ?></p>
+                        </div>
+                    </div>
+                    <?php if (!empty($specific_complaint['preferred_date'])): ?>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500">Preferred Date</p>
+                            <p class="font-medium"><?php echo date('F j, Y', strtotime($specific_complaint['preferred_date'])); ?></p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500">Preferred Time</p>
+                            <p class="font-medium"><?php echo htmlspecialchars($specific_complaint['preferred_time']); ?></p>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-3 pt-4 border-t">
+                <?php if ($specific_complaint['status'] === 'pending'): ?>
+                <button onclick="scheduleComplaint(<?php echo $specific_complaint['id']; ?>)" class="flex-1 bg-[#800000] text-white px-6 py-3 rounded-lg hover:bg-[#a52a2a] transition font-medium">
+                    <i class="fas fa-calendar-alt mr-2"></i>Schedule Counseling
+                </button>
+                <?php endif; ?>
+                <button onclick="window.location.href='complaint-concern-admin.php'" class="flex-1 bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-medium">
+                    Back to List
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function scheduleComplaint(complaintId) {
+        // Redirect to set-schedule page or open schedule modal
+        window.location.href = 'set-schedule.php?complaint_id=' + complaintId;
+    }
+</script>
+<?php endif; ?>
+
 <div class="main-content">
     <main class=" min-h-screen">
         <div class="p-8">
@@ -775,15 +923,12 @@ $pending_complaints = count($complaints);
             // Generate time slots
             function generateTimeSlots() {
                 const slots = [];
-                const startHour = 8; // 8 AM
-                const endHour = 17; // 5 PM
+                const times = [
+                    '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+                    '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
+                ];
                 
-                for (let hour = startHour; hour <= endHour; hour++) {
-                    const time = `${hour}:00`;
-                    slots.push(time);
-                }
-                
-                return slots;
+                return times;
             }
 
             // Check time slot availability

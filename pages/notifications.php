@@ -370,17 +370,15 @@ try {
                                                 </p>
                                             </div>
                                         <?php endif; ?>
-                                        <?php if ($notification['type'] === 'new_complaint'): ?>
-                                            <div class="col-span-2 mt-4">
-                                                <a href="complaint-concern-admin.php"
-                                                    class="inline-flex items-center px-4 py-2 bg-[#800000] text-white rounded-lg hover:bg-[#a52a2a] transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
-                                                    </svg>
-                                                    Manage Complaint
-                                                </a>
-                                            </div>
-                                        <?php endif; ?>
+                                        <div class="col-span-2 mt-4">
+                                            <a href="complaint-concern-admin.php?id=<?php echo $notification['reference_id']; ?>"
+                                                class="inline-flex items-center px-4 py-2 bg-[#800000] text-white rounded-lg hover:bg-[#a52a2a] transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd" />
+                                                </svg>
+                                                View Complaint Details
+                                            </a>
+                                        </div>
                                     </div>
                                 </div>
                             <?php elseif ($notification['reference_type'] === 'lost_item'): ?>
@@ -447,8 +445,12 @@ try {
             const details = element.nextElementSibling;
             const chevron = element.querySelector('.chevron-icon');
 
-            details.classList.toggle('active');
-            chevron.classList.toggle('active');
+            if (details) {
+                details.classList.toggle('active');
+            }
+            if (chevron) {
+                chevron.classList.toggle('active');
+            }
         }
     </script>
 </body>

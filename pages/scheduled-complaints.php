@@ -258,15 +258,20 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                         Reschedule
                                                     </span>
                                                 </button>
-                                                <form action="mark_resolved.php" method="POST" class="inline">
-                                                    <input type="hidden" name="complaint_id" value="<?= $complaint['id'] ?>">
-                                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition-colors duration-200 group relative">
-                                                        <i class="fas fa-check-circle"></i>
-                                                        <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
-                                                            Mark as Resolved
-                                                        </span>
-                                                    </button>
-                                                </form>
+                                                <button class="mark-resolved-btn bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg transition-colors duration-200 group relative"
+                                                        data-complaint-id="<?= $complaint['id'] ?>">
+                                                    <i class="fas fa-check-circle"></i>
+                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                        Mark as Resolved
+                                                    </span>
+                                                </button>
+                                                <button class="mark-unresolved-btn bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition-colors duration-200 group relative"
+                                                        data-complaint-id="<?= $complaint['id'] ?>">
+                                                    <i class="fas fa-times-circle"></i>
+                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                        Unresolved Issue
+                                                    </span>
+                                                </button>
                                                 <button class="view-complaint bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg transition-colors duration-200 group relative"
                                                         data-complaint='<?php 
                                                             $complaintData = $complaint;
@@ -362,6 +367,13 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <p class="text-sm text-gray-500">Status</p>
                                 <p class="text-sm font-medium text-gray-900" id="viewStatus"></p>
                             </div>
+                            <div class="bg-white p-3 rounded-md shadow-sm" id="viewRemarkContainer" style="display: none;">
+                                <p class="text-sm text-gray-500 mb-2 flex items-center">
+                                    <i class="fas fa-comment-medical mr-2 text-[#800000]"></i>
+                                    Admin Remarks
+                                </p>
+                                <p class="text-sm font-medium text-gray-900 whitespace-pre-wrap bg-yellow-50 p-3 rounded border-l-4 border-[#800000]" id="viewRemark"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -402,6 +414,76 @@ $scheduled_complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mark as Resolved Modal -->
+<div id="markResolvedModal" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm overflow-y-auto hidden z-50">
+    <div class="relative top-20 mx-auto p-6 w-[32rem] bg-white rounded-2xl shadow-xl transform transition-all">
+        <div class="pb-4 border-b border-gray-100">
+            <h3 class="text-xl font-semibold text-green-700 flex items-center gap-2">
+                <i class="fas fa-check-circle"></i>
+                Mark Complaint as Resolved
+            </h3>
+            <p class="text-sm text-gray-600 mt-1">Please provide remarks about the session and resolution</p>
+        </div>
+        <div class="py-6 space-y-4">
+            <div>
+                <label for="adminRemark" class="block text-sm font-medium text-gray-700 mb-2">
+                    Session Remarks <span class="text-red-500">*</span>
+                </label>
+                <textarea id="adminRemark" rows="5" required
+                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-green-600 focus:ring-2 focus:ring-green-600/20 transition duration-200 ease-in-out resize-none"
+                    placeholder="Enter your remarks about the counseling session, actions taken, and resolution details..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">This will be saved for record keeping and future reference</p>
+            </div>
+            <input type="hidden" id="resolvedComplaintId">
+        </div>
+        <div class="pt-4 border-t border-gray-100 flex justify-end gap-3">
+            <button id="cancelMarkResolved" class="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition duration-200 flex items-center gap-2">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+            <button id="confirmMarkResolved" class="px-4 py-2.5 rounded-xl bg-green-600 text-white hover:bg-green-700 transition duration-200 flex items-center gap-2">
+                <i class="fas fa-check"></i>
+                Confirm & Mark as Resolved
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Mark as Unresolved Modal -->
+<div id="markUnresolvedModal" class="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm overflow-y-auto hidden z-50">
+    <div class="relative top-20 mx-auto p-6 w-[32rem] bg-white rounded-2xl shadow-xl transform transition-all">
+        <div class="pb-4 border-b border-gray-100">
+            <h3 class="text-xl font-semibold text-red-700 flex items-center gap-2">
+                <i class="fas fa-times-circle"></i>
+                Mark as Unresolved Issue
+            </h3>
+            <p class="text-sm text-gray-600 mt-1">Document why this issue remains unresolved</p>
+        </div>
+        <div class="py-6 space-y-4">
+            <div>
+                <label for="unresolvedRemark" class="block text-sm font-medium text-gray-700 mb-2">
+                    Reason for Unresolved Status <span class="text-red-500">*</span>
+                </label>
+                <textarea id="unresolvedRemark" rows="5" required
+                    class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-red-600 focus:ring-2 focus:ring-red-600/20 transition duration-200 ease-in-out resize-none"
+                    placeholder="Explain why this issue could not be resolved, what challenges were encountered, and what follow-up actions are needed..."></textarea>
+                <p class="text-xs text-gray-500 mt-1">This will help track ongoing issues and plan future interventions</p>
+            </div>
+            <input type="hidden" id="unresolvedComplaintId">
+        </div>
+        <div class="pt-4 border-t border-gray-100 flex justify-end gap-3">
+            <button id="cancelMarkUnresolved" class="px-4 py-2.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 transition duration-200 flex items-center gap-2">
+                <i class="fas fa-times"></i>
+                Cancel
+            </button>
+            <button id="confirmMarkUnresolved" class="px-4 py-2.5 rounded-xl bg-red-600 text-white hover:bg-red-700 transition duration-200 flex items-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i>
+                Confirm Unresolved Status
+            </button>
         </div>
     </div>
 </div>
@@ -492,6 +574,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('viewScheduledDate').textContent = complaint.scheduled_date || 'N/A';
         document.getElementById('viewScheduledTime').textContent = complaint.scheduled_time || 'N/A';
 
+        // Display admin remark if available
+        const remarkContainer = document.getElementById('viewRemarkContainer');
+        const remarkText = document.getElementById('viewRemark');
+        if (complaint.admin_remark && complaint.admin_remark.trim() !== '') {
+            remarkText.textContent = complaint.admin_remark;
+            remarkContainer.style.display = 'block';
+        } else {
+            remarkContainer.style.display = 'none';
+        }
+
         // Set evidence
         const evidenceContainer = document.getElementById('viewEvidence');
         if (evidence && mimeType) {
@@ -571,15 +663,12 @@ document.addEventListener('DOMContentLoaded', function() {
     // Reschedule functionality
     function generateTimeSlots() {
         const slots = [];
-        const startHour = 8; // 8 AM
-        const endHour = 17; // 5 PM
+        const times = [
+            '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
+            '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'
+        ];
         
-        for (let hour = startHour; hour <= endHour; hour++) {
-            const time = `${hour}:00`;
-            slots.push(time);
-        }
-        
-        return slots;
+        return times;
     }
 
     async function checkTimeSlotAvailability(date, time) {
@@ -763,28 +852,82 @@ EMEMHS Guidance Office`;
         });
     }
 
-    // Handle marking complaint as resolved
-    document.querySelectorAll('form[action="mark_resolved.php"]').forEach(form => {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            if (!confirm('Are you sure you want to mark this complaint as resolved?')) {
-                return;
-            }
-            
-            const formData = new FormData(this);
-            
-            try {
-                const response = await fetch('mark_resolved.php', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    try {
-                        const resolvedMessage = `
+    // Mark as Resolved Modal handlers
+    const markResolvedModal = document.getElementById('markResolvedModal');
+    const adminRemark = document.getElementById('adminRemark');
+    const resolvedComplaintId = document.getElementById('resolvedComplaintId');
+    const cancelMarkResolved = document.getElementById('cancelMarkResolved');
+    const confirmMarkResolved = document.getElementById('confirmMarkResolved');
+
+    // Mark as Unresolved Modal handlers
+    const markUnresolvedModal = document.getElementById('markUnresolvedModal');
+    const unresolvedRemark = document.getElementById('unresolvedRemark');
+    const unresolvedComplaintId = document.getElementById('unresolvedComplaintId');
+    const cancelMarkUnresolved = document.getElementById('cancelMarkUnresolved');
+    const confirmMarkUnresolved = document.getElementById('confirmMarkUnresolved');
+
+    // Handle mark as resolved button clicks
+    document.querySelectorAll('.mark-resolved-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const complaintId = this.dataset.complaintId;
+            resolvedComplaintId.value = complaintId;
+            adminRemark.value = '';
+            markResolvedModal.classList.remove('hidden');
+        });
+    });
+
+    // Handle mark as unresolved button clicks
+    document.querySelectorAll('.mark-unresolved-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const complaintId = this.dataset.complaintId;
+            unresolvedComplaintId.value = complaintId;
+            unresolvedRemark.value = '';
+            markUnresolvedModal.classList.remove('hidden');
+        });
+    });
+
+    // Cancel mark as resolved
+    cancelMarkResolved.addEventListener('click', () => {
+        markResolvedModal.classList.add('hidden');
+    });
+
+    // Cancel mark as unresolved
+    cancelMarkUnresolved.addEventListener('click', () => {
+        markUnresolvedModal.classList.add('hidden');
+    });
+
+    // Confirm mark as resolved
+    confirmMarkResolved.addEventListener('click', async function() {
+        const remark = adminRemark.value.trim();
+        const complaintId = resolvedComplaintId.value;
+
+        if (!remark) {
+            alert('Please enter session remarks before marking as resolved');
+            adminRemark.focus();
+            return;
+        }
+
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+        try {
+            const formData = new FormData();
+            formData.append('complaint_id', complaintId);
+            formData.append('admin_remark', remark);
+            formData.append('status', 'resolved');
+
+            const response = await fetch('mark_resolved.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                try {
+                    const resolvedMessage = `
 Dear ${data.student_name},
 
 Your complaint has been successfully resolved by our guidance counselor. 
@@ -801,25 +944,74 @@ If you have any further concerns or questions, please don't hesitate to contact 
 Best regards,
 EMEMHS Guidance Office`;
 
-                        await sendEmailNotification(
-                            data.student_email,
-                            'Complaint Resolved - EMEMHS Guidance System',
-                            resolvedMessage
-                        );
-                        alert('Complaint marked as resolved and notification sent successfully!');
-                        window.location.reload();
-                    } catch (emailError) {
-                        console.error('Error sending email:', emailError);
-                        alert('Complaint marked as resolved but failed to send notification. Please try again.');
-                    }
-                } else {
-                    alert('Error marking complaint as resolved: ' + (data.error || 'Unknown error'));
+                    await sendEmailNotification(
+                        data.student_email,
+                        'Complaint Resolved - EMEMHS Guidance System',
+                        resolvedMessage
+                    );
+                    alert('Complaint marked as resolved and notification sent successfully!');
+                    window.location.reload();
+                } catch (emailError) {
+                    console.error('Error sending email:', emailError);
+                    alert('Complaint marked as resolved but failed to send notification.');
+                    window.location.reload();
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Error processing request. Please try again.');
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+                this.disabled = false;
+                this.innerHTML = originalText;
             }
-        });
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error processing request. Please try again.');
+            this.disabled = false;
+            this.innerHTML = originalText;
+        }
+    });
+
+    // Confirm mark as unresolved
+    confirmMarkUnresolved.addEventListener('click', async function() {
+        const remark = unresolvedRemark.value.trim();
+        const complaintId = unresolvedComplaintId.value;
+
+        if (!remark) {
+            alert('Please explain why this issue remains unresolved');
+            unresolvedRemark.focus();
+            return;
+        }
+
+        // Show loading state
+        const originalText = this.innerHTML;
+        this.disabled = true;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+
+        try {
+            const formData = new FormData();
+            formData.append('complaint_id', complaintId);
+            formData.append('admin_remark', remark);
+            formData.append('status', 'unresolved');
+
+            const response = await fetch('mark_resolved.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                alert('Complaint marked as unresolved. This will require follow-up action.');
+                window.location.reload();
+            } else {
+                alert('Error: ' + (data.error || 'Unknown error'));
+                this.disabled = false;
+                this.innerHTML = originalText;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error processing request. Please try again.');
+            this.disabled = false;
+            this.innerHTML = originalText;
+        }
     });
     
     // Handle Send Parent SMS button

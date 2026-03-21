@@ -161,15 +161,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .card {
             background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: all 0.3s ease;
         }
 
         .status-badge {
-            padding: 0.25rem 0.75rem;
+            padding: 0.125rem 0.5rem;
             border-radius: 9999px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 500;
         }
 
@@ -189,13 +189,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 0.375rem;
             font-weight: 500;
+            font-size: 0.875rem;
             transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.375rem;
         }
 
         .btn-approve {
@@ -227,50 +228,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php include 'navigation-admin.php'?>
 <div class="main-content">
     <main class="min-h-screen">
-        <div class="p-8">
-            <div class="flex items-center justify-between mb-6">
+        <div class="p-4">
+            <div class="flex items-center justify-between mb-4">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-800 mb-2">Reschedule Requests</h1>
-                    <p class="text-gray-600">Manage student reschedule requests</p>
+                    <h1 class="text-xl font-bold text-gray-800 mb-1">Reschedule Requests</h1>
+                    <p class="text-sm text-gray-600">Manage student reschedule requests</p>
                 </div>
-                <div class="bg-[#800000]/10 text-[#800000] rounded-full p-3">
-                    <i class="fas fa-calendar-alt text-xl"></i>
+                <div class="bg-[#800000]/10 text-[#800000] rounded-full p-2">
+                    <i class="fas fa-calendar-alt text-lg"></i>
                 </div>
             </div>
 
             <?php if (isset($success_message)): ?>
-                <div class="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg mb-6">
+                <div class="bg-green-50 border border-green-200 text-green-700 px-3 py-2 rounded-lg mb-4 text-sm">
                     <i class="fas fa-check-circle mr-2"></i>
                     <?= $success_message ?>
                 </div>
             <?php endif; ?>
 
             <?php if (isset($error_message)): ?>
-                <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                <div class="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-lg mb-4 text-sm">
                     <i class="fas fa-exclamation-circle mr-2"></i>
                     <?= $error_message ?>
                 </div>
             <?php endif; ?>
 
             <?php if (empty($reschedule_requests)): ?>
-                <div class="card p-8 text-center">
-                    <div class="bg-gray-50 rounded-full w-24 h-24 mx-auto mb-4 flex items-center justify-center">
-                        <i class="fas fa-calendar-times text-4xl text-gray-400"></i>
+                <div class="card p-6 text-center">
+                    <div class="bg-gray-50 rounded-full w-16 h-16 mx-auto mb-3 flex items-center justify-center">
+                        <i class="fas fa-calendar-times text-2xl text-gray-400"></i>
                     </div>
-                    <h3 class="text-lg font-medium text-gray-900 mb-2">No Reschedule Requests</h3>
-                    <p class="text-gray-500">There are currently no reschedule requests to review.</p>
+                    <h3 class="text-base font-medium text-gray-900 mb-1">No Reschedule Requests</h3>
+                    <p class="text-sm text-gray-500">There are currently no reschedule requests to review.</p>
                 </div>
             <?php else: ?>
-                <div class="grid gap-6">
+                <div class="grid gap-4">
                     <?php foreach ($reschedule_requests as $request): ?>
-                        <div class="card p-6">
-                            <div class="flex justify-between items-start mb-4">
+                        <div class="card p-4">
+                            <div class="flex justify-between items-start mb-3">
                                 <div class="flex-1">
-                                    <div class="flex items-center gap-4 mb-3">
-                                        <h3 class="text-lg font-semibold text-gray-900">
+                                    <div class="flex items-center gap-3 mb-2">
+                                        <h3 class="text-base font-semibold text-gray-900">
                                             <?= htmlspecialchars($request['first_name'] . ' ' . $request['last_name']) ?>
                                         </h3>
-                                        <span class="text-sm text-gray-500">
+                                        <span class="text-xs text-gray-500">
                                             <?= htmlspecialchars($request['grade_level'] . ' ' . $request['section']) ?>
                                         </span>
                                         <span class="status-badge status-<?= $request['status'] ?>">
@@ -278,51 +279,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                         </span>
                                     </div>
                                     
-                                    <div class="grid grid-cols-2 gap-6 mb-4">
+                                    <div class="grid grid-cols-2 gap-4 mb-3">
                                         <div>
-                                            <h4 class="font-medium text-gray-700 mb-2">Current Schedule</h4>
-                                            <div class="text-sm text-gray-600">
-                                                <div class="flex items-center gap-2 mb-1">
-                                                    <i class="fas fa-calendar text-[#800000]"></i>
-                                                    <span><?= date('F j, Y', strtotime($request['scheduled_date'])) ?></span>
+                                            <h4 class="text-xs font-medium text-gray-700 mb-1">Current Schedule</h4>
+                                            <div class="text-xs text-gray-600">
+                                                <div class="flex items-center gap-1.5 mb-0.5">
+                                                    <i class="fas fa-calendar text-[#800000] text-xs"></i>
+                                                    <span><?= date('M j, Y', strtotime($request['scheduled_date'])) ?></span>
                                                 </div>
-                                                <div class="flex items-center gap-2">
-                                                    <i class="fas fa-clock text-[#800000]"></i>
+                                                <div class="flex items-center gap-1.5">
+                                                    <i class="fas fa-clock text-[#800000] text-xs"></i>
                                                     <span><?= date('g:i A', strtotime($request['scheduled_time'])) ?></span>
                                                 </div>
                                             </div>
                                         </div>
                                         
                                         <div>
-                                            <h4 class="font-medium text-gray-700 mb-2">Requested Schedule</h4>
-                                            <div class="text-sm text-gray-600">
-                                                <div class="flex items-center gap-2 mb-1">
-                                                    <i class="fas fa-calendar text-blue-600"></i>
-                                                    <span><?= date('F j, Y', strtotime($request['preferred_date'])) ?></span>
+                                            <h4 class="text-xs font-medium text-gray-700 mb-1">Requested Schedule</h4>
+                                            <div class="text-xs text-gray-600">
+                                                <div class="flex items-center gap-1.5 mb-0.5">
+                                                    <i class="fas fa-calendar text-blue-600 text-xs"></i>
+                                                    <span><?= date('M j, Y', strtotime($request['preferred_date'])) ?></span>
                                                 </div>
-                                                <div class="flex items-center gap-2">
-                                                    <i class="fas fa-clock text-blue-600"></i>
+                                                <div class="flex items-center gap-1.5">
+                                                    <i class="fas fa-clock text-blue-600 text-xs"></i>
                                                     <span><?= date('g:i A', strtotime($request['preferred_time'])) ?></span>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div class="mb-4">
-                                        <h4 class="font-medium text-gray-700 mb-2">Reason</h4>
-                                        <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                                    <div class="mb-2">
+                                        <h4 class="text-xs font-medium text-gray-700 mb-1">Reason</h4>
+                                        <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded">
                                             <?= htmlspecialchars($request['reason']) ?>
                                         </p>
                                     </div>
 
                                     <div class="text-xs text-gray-500">
-                                        Requested on: <?= date('F j, Y g:i A', strtotime($request['date_requested'])) ?>
+                                        Requested: <?= date('M j, Y g:i A', strtotime($request['date_requested'])) ?>
                                     </div>
 
                                     <?php if ($request['admin_response']): ?>
-                                        <div class="mt-3">
-                                            <h4 class="font-medium text-gray-700 mb-2">Admin Response</h4>
-                                            <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                                        <div class="mt-2">
+                                            <h4 class="text-xs font-medium text-gray-700 mb-1">Admin Response</h4>
+                                            <p class="text-xs text-gray-600 bg-gray-50 p-2 rounded">
                                                 <?= htmlspecialchars($request['admin_response']) ?>
                                             </p>
                                         </div>
@@ -331,15 +332,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
 
                             <?php if ($request['status'] === 'pending'): ?>
-                                <div class="border-t pt-4 flex gap-3">
+                                <div class="border-t pt-3 flex gap-2">
                                     <button onclick="openResponseModal(<?= $request['id'] ?>, 'approve')" 
                                             class="btn btn-approve">
-                                        <i class="fas fa-check"></i>
+                                        <i class="fas fa-check text-xs"></i>
                                         Approve
                                     </button>
                                     <button onclick="openResponseModal(<?= $request['id'] ?>, 'reject')" 
                                             class="btn btn-reject">
-                                        <i class="fas fa-times"></i>
+                                        <i class="fas fa-times text-xs"></i>
                                         Reject
                                     </button>
                                 </div>
@@ -354,29 +355,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!-- Response Modal -->
 <div id="responseModal" class="fixed inset-0 bg-black bg-opacity-50 overflow-y-auto hidden z-50">
-    <div class="relative top-20 mx-auto p-6 w-full max-w-md modal-content">
-        <div class="pb-4 border-b border-gray-100">
-            <h3 class="text-xl font-semibold text-[#800000]" id="modalTitle">Respond to Request</h3>
+    <div class="relative top-20 mx-auto p-4 w-full max-w-md modal-content">
+        <div class="pb-3 border-b border-gray-100">
+            <h3 class="text-lg font-semibold text-[#800000]" id="modalTitle">Respond to Request</h3>
         </div>
         
-        <form method="POST" class="py-6">
+        <form method="POST" class="py-4">
             <input type="hidden" id="request_id" name="request_id">
             <input type="hidden" id="action" name="action">
             
             <div class="mb-4">
-                <label for="admin_response" class="block text-sm font-medium text-gray-700 mb-2">Response Message</label>
-                <textarea id="admin_response" name="admin_response" rows="4" required
-                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-[#800000]" 
+                <label for="admin_response" class="block text-sm font-medium text-gray-700 mb-1">Response Message</label>
+                <textarea id="admin_response" name="admin_response" rows="3" required
+                          class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:border-[#800000]" 
                           placeholder="Provide a response to the student..."></textarea>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex justify-end gap-2">
                 <button type="button" onclick="closeResponseModal()" 
-                        class="px-4 py-2 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition duration-200">
+                        class="px-3 py-1.5 text-sm rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 transition duration-200">
                     Cancel
                 </button>
                 <button type="submit" id="submitBtn" 
-                        class="px-4 py-2 rounded-lg text-white transition duration-200">
+                        class="px-3 py-1.5 text-sm rounded-lg text-white transition duration-200">
                     Submit
                 </button>
             </div>

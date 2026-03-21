@@ -16,10 +16,6 @@
             overflow-x: hidden;
         }
         .landing{
-            background: url('image/landing-copy2.jpg');
-            background-size: cover;
-            background-position: center ;
-            background-repeat: no-repeat;
             height: 90vh;
         }
         .accent-primary { color: #800000; }

@@ -456,6 +456,13 @@ foreach ($all_complaints as $complaint) {
                                 <p class="text-sm text-gray-500">Status</p>
                                 <p class="text-sm font-medium text-gray-900" id="viewStatus"></p>
                             </div>
+                            <div class="bg-white p-3 rounded-md shadow-sm" id="viewRemarkContainer" style="display: none;">
+                                <p class="text-sm text-gray-500 mb-2 flex items-center">
+                                    <i class="fas fa-comment-medical mr-2 text-[#800000]"></i>
+                                    Admin Remarks
+                                </p>
+                                <p class="text-sm font-medium text-gray-900 whitespace-pre-wrap bg-yellow-50 p-3 rounded border-l-4 border-[#800000]" id="viewRemark"></p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -549,16 +556,18 @@ foreach ($all_complaints as $complaint) {
         const statusClasses = {
             'pending': 'status-pending',
             'scheduled': 'status-scheduled',
-            'resolved': 'status-resolved'
+            'resolved': 'status-resolved',
+            'unresolved': 'status-badge bg-red-100 text-red-800'
         };
         const statusIcons = {
             'pending': 'fa-clock',
             'scheduled': 'fa-calendar-check',
-            'resolved': 'fa-check-circle'
+            'resolved': 'fa-check-circle',
+            'unresolved': 'fa-times-circle'
         };
         document.getElementById('viewStatus').innerHTML = `
-            <span class="status-badge ${statusClasses[complaint.status]}">
-                <i class="fas ${statusIcons[complaint.status]}"></i>
+            <span class="status-badge ${statusClasses[complaint.status] || 'status-pending'}">
+                <i class="fas ${statusIcons[complaint.status] || 'fa-clock'}"></i>
                 ${complaint.status.charAt(0).toUpperCase() + complaint.status.slice(1)}
             </span>
         `;
@@ -566,6 +575,16 @@ foreach ($all_complaints as $complaint) {
         document.getElementById('viewPreferredDate').textContent = complaint.preferred_counseling_date || 'N/A';
         document.getElementById('viewScheduledDate').textContent = complaint.scheduled_date || 'N/A';
         document.getElementById('viewScheduledTime').textContent = complaint.scheduled_time || 'N/A';
+
+        // Display admin remark if available
+        const remarkContainer = document.getElementById('viewRemarkContainer');
+        const remarkText = document.getElementById('viewRemark');
+        if (complaint.admin_remark && complaint.admin_remark.trim() !== '') {
+            remarkText.textContent = complaint.admin_remark;
+            remarkContainer.style.display = 'block';
+        } else {
+            remarkContainer.style.display = 'none';
+        }
 
         // Set evidence
         const evidenceContainer = document.getElementById('viewEvidence');

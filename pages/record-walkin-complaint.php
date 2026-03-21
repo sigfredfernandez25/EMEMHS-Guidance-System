@@ -257,13 +257,6 @@ if (!$_SESSION['isLoggedIn']) {
             <div class="mb-8">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center">
-                        <a href="complaint-concern-admin.php" class="btn-secondary mr-4">
-                            <i class="fas fa-arrow-left"></i>
-                            Back
-                        </a>
-                        <div class="bg-[#800000]/10 text-[#800000] rounded-full p-3 mr-4">
-                            <i class="fas fa-user-edit text-xl"></i>
-                        </div>
                         <div>
                             <h1 class="text-2xl font-bold text-gray-800">Record Walk-in Complaint</h1>
                             <p class="text-sm text-gray-600 mt-1">Document complaints from students who walked in without an online appointment</p>
@@ -422,6 +415,15 @@ if (!$_SESSION['isLoggedIn']) {
                             Action Taken / Recommendations
                         </label>
                         <textarea name="action_taken" id="action_taken" class="form-textarea" placeholder="Describe any actions taken or recommendations given during the session..."></textarea>
+                    </div>
+
+                    <!-- Admin Remarks -->
+                    <div class="mb-6">
+                        <label for="admin_remark" class="form-label">
+                            Admin Remarks / Resolution Notes <span class="required">*</span>
+                        </label>
+                        <textarea name="admin_remark" id="admin_remark" class="form-textarea" required placeholder="Document the outcome of the counseling session, resolution status, and any important notes..."></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Required: Explain how the issue was addressed and the current status.</p>
                     </div>
 
                     <!-- Follow-up Required -->

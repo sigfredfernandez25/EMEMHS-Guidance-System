@@ -22,7 +22,7 @@ try {
     // Validate POST data exists
     if (!isset($_POST['first_name']) || !isset($_POST['last_name']) || !isset($_POST['grade_level']) || 
         !isset($_POST['section']) || !isset($_POST['complaint_type']) || !isset($_POST['description']) || 
-        !isset($_POST['counseling_date'])) {
+        !isset($_POST['counseling_date']) || !isset($_POST['admin_remark'])) {
         throw new Exception("Missing required form data");
     }
 
@@ -46,6 +46,7 @@ try {
     $description = $_POST['description'];
     $counseling_date = $_POST['counseling_date'];
     $action_taken = $_POST['action_taken'] ?? '';
+    $admin_remark = trim($_POST['admin_remark']);
     $follow_up_required = isset($_POST['follow_up_required']) ? 1 : 0;
 
     // Check if student already exists in the system
@@ -106,12 +107,12 @@ try {
 
     $pdo->beginTransaction();
 
-    // Insert the walk-in complaint record
+    // Insert the walk-in complaint record with admin remarks
     $stmt = $pdo->prepare(
         "INSERT INTO " . TBL_COMPLAINTS_CONCERNS . " 
         (student_id, type, severity, description, preferred_counseling_date, scheduled_date, scheduled_time, 
-        evidence, mime_type, status, date_created, time_created)
-        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?)"
+        evidence, mime_type, status, admin_remark, date_created, time_created)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?)"
     );
     
     $stmt->execute([
@@ -123,6 +124,7 @@ try {
         $counseling_date, // Also set as scheduled date
         '00:00:00', // Default time for walk-ins
         $status,
+        $admin_remark, // Add admin remarks
         $date,
         $time
     ]);
