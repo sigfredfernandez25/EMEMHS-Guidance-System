@@ -10,11 +10,33 @@ if (!$_SESSION['isLoggedIn']) {
 }
 
 // Get filter parameters
-$start_date = $_GET['start_date'] ?? date('Y-m-01'); // First day of current month
-$end_date = $_GET['end_date'] ?? date('Y-m-d'); // Today
+$date_range = $_GET['date_range'] ?? 'month';
 $complaint_type = $_GET['type'] ?? 'all';
 $severity = $_GET['severity'] ?? 'all';
 $grade_level = $_GET['grade'] ?? 'all';
+
+// Calculate start and end dates based on date range
+switch ($date_range) {
+    case 'day':
+        $start_date = date('Y-m-d');
+        $end_date = date('Y-m-d');
+        break;
+    case 'week':
+        $start_date = date('Y-m-d', strtotime('monday this week'));
+        $end_date = date('Y-m-d', strtotime('sunday this week'));
+        break;
+    case 'month':
+        $start_date = date('Y-m-01');
+        $end_date = date('Y-m-t');
+        break;
+    case 'custom':
+        $start_date = $_GET['start_date'] ?? date('Y-m-01');
+        $end_date = $_GET['end_date'] ?? date('Y-m-d');
+        break;
+    default:
+        $start_date = date('Y-m-01');
+        $end_date = date('Y-m-t');
+}
 
 // Build query with filters
 $query = "
@@ -194,6 +216,29 @@ if ($isPrintView) {
         .table-compact td, .table-compact th {
             padding: 0.5rem 0.75rem;
         }
+
+        .date-range-btn {
+            flex: 1;
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            border: 1px solid #e2e8f0;
+            background: white;
+            color: #4b5563;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .date-range-btn:hover {
+            background: #f9fafb;
+            border-color: #800000;
+        }
+
+        .date-range-btn.active {
+            background: #800000;
+            color: white;
+            border-color: #800000;
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -229,54 +274,114 @@ if ($isPrintView) {
             <!-- Filters -->
             <div id="filterPanel" class="compact-filter collapsed no-print mb-4">
                 <div class="bg-white p-4 rounded-lg shadow-sm">
-                    <form method="GET" class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <form method="GET" id="filterForm" class="space-y-3">
+                        <!-- Date Range Selector -->
                         <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
-                            <input type="date" name="start_date" value="<?= htmlspecialchars($start_date) ?>" 
-                                   class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                            <label class="block text-xs font-medium text-gray-600 mb-2">Date Range</label>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="selectDateRange('day')" 
+                                        class="date-range-btn <?= $date_range === 'day' ? 'active' : '' ?>" data-range="day">
+                                    <i class="fas fa-calendar-day mr-1"></i>Day
+                                </button>
+                                <button type="button" onclick="selectDateRange('week')" 
+                                        class="date-range-btn <?= $date_range === 'week' ? 'active' : '' ?>" data-range="week">
+                                    <i class="fas fa-calendar-week mr-1"></i>Week
+                                </button>
+                                <button type="button" onclick="selectDateRange('month')" 
+                                        class="date-range-btn <?= $date_range === 'month' ? 'active' : '' ?>" data-range="month">
+                                    <i class="fas fa-calendar-alt mr-1"></i>Month
+                                </button>
+                                <button type="button" onclick="selectDateRange('custom')" 
+                                        class="date-range-btn <?= $date_range === 'custom' ? 'active' : '' ?>" data-range="custom">
+                                    <i class="fas fa-calendar mr-1"></i>Custom
+                                </button>
+                            </div>
+                            <input type="hidden" name="date_range" id="date_range" value="<?= htmlspecialchars($date_range) ?>">
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">End Date</label>
-                            <input type="date" name="end_date" value="<?= htmlspecialchars($end_date) ?>" 
-                                   class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+
+                        <!-- Day Picker (shown only when day is selected) -->
+                        <div id="dayPicker" class="grid grid-cols-1 gap-3" style="display: <?= $date_range === 'day' ? 'grid' : 'none' ?>;">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Select Day</label>
+                                <input type="date" name="selected_day" id="selected_day" value="<?= htmlspecialchars($_GET['selected_day'] ?? date('Y-m-d')) ?>" 
+                                       class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Type</label>
-                            <select name="type" class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
-                                <option value="all" <?= $complaint_type === 'all' ? 'selected' : '' ?>>All Types</option>
-                                <?php foreach ($types as $type): ?>
-                                    <option value="<?= htmlspecialchars($type) ?>" <?= $complaint_type === $type ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($type) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+
+                        <!-- Week Picker (shown only when week is selected) -->
+                        <div id="weekPicker" class="grid grid-cols-1 gap-3" style="display: <?= $date_range === 'week' ? 'grid' : 'none' ?>;">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Select Week</label>
+                                <input type="week" name="selected_week" id="selected_week" value="<?= htmlspecialchars($_GET['selected_week'] ?? date('Y') . '-W' . date('W')) ?>" 
+                                       class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Severity</label>
-                            <select name="severity" class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
-                                <option value="all" <?= $severity === 'all' ? 'selected' : '' ?>>All Severities</option>
-                                <option value="low" <?= $severity === 'low' ? 'selected' : '' ?>>Low</option>
-                                <option value="medium" <?= $severity === 'medium' ? 'selected' : '' ?>>Medium</option>
-                                <option value="high" <?= $severity === 'high' ? 'selected' : '' ?>>High</option>
-                                <option value="urgent" <?= $severity === 'urgent' ? 'selected' : '' ?>>Urgent</option>
-                            </select>
+
+                        <!-- Month Picker (shown only when month is selected) -->
+                        <div id="monthPicker" class="grid grid-cols-1 gap-3" style="display: <?= $date_range === 'month' ? 'grid' : 'none' ?>;">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Select Month</label>
+                                <input type="month" name="selected_month" id="selected_month" value="<?= htmlspecialchars($_GET['selected_month'] ?? date('Y-m')) ?>" 
+                                       class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                            </div>
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">Grade Level</label>
-                            <select name="grade" class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
-                                <option value="all" <?= $grade_level === 'all' ? 'selected' : '' ?>>All Grades</option>
-                                <?php foreach ($grades as $grade): ?>
-                                    <option value="<?= htmlspecialchars($grade) ?>" <?= $grade_level === $grade ? 'selected' : '' ?>>
-                                        <?= htmlspecialchars($grade) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+
+                        <!-- Custom Date Inputs (shown only when custom is selected) -->
+                        <div id="customDateInputs" class="grid grid-cols-2 gap-3" style="display: <?= $date_range === 'custom' ? 'grid' : 'none' ?>;">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
+                                <input type="date" name="start_date" id="start_date" value="<?= htmlspecialchars($_GET['start_date'] ?? $start_date) ?>" 
+                                       class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">End Date</label>
+                                <input type="date" name="end_date" id="end_date" value="<?= htmlspecialchars($_GET['end_date'] ?? $end_date) ?>" 
+                                       class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                            </div>
                         </div>
-                        <div class="col-span-2 md:col-span-5 flex gap-2">
+
+                        <!-- Other Filters -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Type</label>
+                                <select name="type" class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                                    <option value="all" <?= $complaint_type === 'all' ? 'selected' : '' ?>>All Types</option>
+                                    <?php foreach ($types as $type): ?>
+                                        <option value="<?= htmlspecialchars($type) ?>" <?= $complaint_type === $type ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($type) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Severity</label>
+                                <select name="severity" class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                                    <option value="all" <?= $severity === 'all' ? 'selected' : '' ?>>All Severities</option>
+                                    <option value="low" <?= $severity === 'low' ? 'selected' : '' ?>>Low</option>
+                                    <option value="medium" <?= $severity === 'medium' ? 'selected' : '' ?>>Medium</option>
+                                    <option value="high" <?= $severity === 'high' ? 'selected' : '' ?>>High</option>
+                                    <option value="urgent" <?= $severity === 'urgent' ? 'selected' : '' ?>>Urgent</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Grade Level</label>
+                                <select name="grade" class="w-full px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                                    <option value="all" <?= $grade_level === 'all' ? 'selected' : '' ?>>All Grades</option>
+                                    <?php foreach ($grades as $grade): ?>
+                                        <option value="<?= htmlspecialchars($grade) ?>" <?= $grade_level === $grade ? 'selected' : '' ?>>
+                                            <?= htmlspecialchars($grade) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex gap-2">
                             <button type="submit" class="bg-[#800000] hover:bg-[#600000] text-white px-4 py-1.5 rounded-lg transition-colors duration-200 text-sm">
                                 <i class="fas fa-check mr-1"></i>Apply
                             </button>
-                            <a href="reports.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1.5 rounded-lg transition-colors duration-200 text-sm">
+                            <a href="reports.php" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-1.5 rounded-lg transition-colors duration-200 text-sm inline-flex items-center">
                                 <i class="fas fa-redo mr-1"></i>Reset
                             </a>
                         </div>
@@ -299,6 +404,34 @@ if ($isPrintView) {
                     // Open print view in new window
                     const printUrl = 'reports.php?' + params.toString();
                     window.open(printUrl, '_blank');
+                }
+
+                function selectDateRange(range) {
+                    // Update hidden input
+                    document.getElementById('date_range').value = range;
+                    
+                    // Update button states
+                    document.querySelectorAll('.date-range-btn').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+                    event.target.closest('.date-range-btn').classList.add('active');
+                    
+                    // Hide all date pickers
+                    document.getElementById('dayPicker').style.display = 'none';
+                    document.getElementById('weekPicker').style.display = 'none';
+                    document.getElementById('monthPicker').style.display = 'none';
+                    document.getElementById('customDateInputs').style.display = 'none';
+                    
+                    // Show appropriate picker
+                    if (range === 'day') {
+                        document.getElementById('dayPicker').style.display = 'grid';
+                    } else if (range === 'week') {
+                        document.getElementById('weekPicker').style.display = 'grid';
+                    } else if (range === 'month') {
+                        document.getElementById('monthPicker').style.display = 'grid';
+                    } else if (range === 'custom') {
+                        document.getElementById('customDateInputs').style.display = 'grid';
+                    }
                 }
             </script>
 
@@ -681,11 +814,8 @@ if ($isPrintView) {
                         <thead class="bg-gray-50">
                             <tr>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Date</th>
-                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Student</th>
-                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Grade</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Type</th>
                                 <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Severity</th>
-                                <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Status</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
@@ -694,12 +824,6 @@ if ($isPrintView) {
                                     <tr class="hover:bg-gray-50 transition-colors">
                                         <td class="px-3 py-2 text-xs text-gray-700 whitespace-nowrap">
                                             <?= date('M d, Y', strtotime($complaint['date_created'])) ?>
-                                        </td>
-                                        <td class="px-3 py-2 text-xs text-gray-900 font-medium">
-                                            <?= htmlspecialchars($complaint['first_name'] . ' ' . $complaint['last_name']) ?>
-                                        </td>
-                                        <td class="px-3 py-2 text-xs text-gray-700">
-                                            <?= htmlspecialchars($complaint['grade_level'] . '-' . $complaint['section']) ?>
                                         </td>
                                         <td class="px-3 py-2 text-xs text-gray-700">
                                             <?= htmlspecialchars($complaint['type']) ?>
@@ -714,21 +838,11 @@ if ($isPrintView) {
                                                 <?= ucfirst($complaint['severity']) ?>
                                             </span>
                                         </td>
-                                        <td class="px-3 py-2 text-xs">
-                                            <span class="px-2 py-0.5 text-xs rounded-full font-medium <?php
-                                                $status = $complaint['status'];
-                                                echo $status === 'pending' ? 'bg-orange-100 text-orange-700' :
-                                                     ($status === 'scheduled' ? 'bg-blue-100 text-blue-700' :
-                                                     ($status === 'resolved' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'));
-                                            ?>">
-                                                <?= ucfirst($complaint['status']) ?>
-                                            </span>
-                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="6" class="px-4 py-8 text-center text-gray-500 text-sm">
+                                    <td colspan="3" class="px-4 py-8 text-center text-gray-500 text-sm">
                                         <i class="fas fa-inbox text-3xl text-gray-300 mb-2"></i>
                                         <p>No complaints found for the selected filters.</p>
                                     </td>

@@ -383,10 +383,15 @@ foreach ($unresolved_issues as $issue) {
                                                             $issueData = $issue;
                                                             unset($issueData['evidence']);
                                                             unset($issueData['mime_type']);
+                                                            unset($issueData['audio_recording']);
+                                                            unset($issueData['audio_mime_type']);
                                                             echo json_encode($issueData); 
                                                         ?>'
                                                         data-evidence='<?php echo !empty($issue['evidence']) ? base64_encode($issue['evidence']) : ''; ?>'
-                                                        data-mime-type='<?php echo !empty($issue['mime_type']) ? htmlspecialchars($issue['mime_type']) : ''; ?>'>
+                                                        data-mime-type='<?php echo !empty($issue['mime_type']) ? htmlspecialchars($issue['mime_type']) : ''; ?>'
+                                                        data-audio='<?php echo !empty($issue['audio_recording']) ? base64_encode($issue['audio_recording']) : ''; ?>'
+                                                        data-audio-mime='<?php echo !empty($issue['audio_mime_type']) ? htmlspecialchars($issue['audio_mime_type']) : ''; ?>'
+                                                        data-audio-duration='<?php echo !empty($issue['audio_duration']) ? $issue['audio_duration'] : '0'; ?>'>
                                                     <i class="fas fa-eye"></i>
                                                     <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                                                         View Details
@@ -519,6 +524,9 @@ foreach ($unresolved_issues as $issue) {
                             <!-- Evidence will be populated here -->
                         </div>
                     </div>
+
+                    <!-- Audio Recording -->
+                    <?php include 'components/audio-player.php'; ?>
                 </div>
             </div>
         </div>
@@ -614,11 +622,14 @@ document.addEventListener('DOMContentLoaded', function() {
             const issueData = JSON.parse(this.dataset.issue);
             const evidence = this.dataset.evidence;
             const mimeType = this.dataset.mimeType;
-            showIssueDetails(issueData, evidence, mimeType);
+            const audioData = this.dataset.audio;
+            const audioMimeType = this.dataset.audioMime;
+            const audioDuration = this.dataset.audioDuration;
+            showIssueDetails(issueData, evidence, mimeType, audioData, audioMimeType, audioDuration);
         });
     });
 
-    function showIssueDetails(issue, evidence, mimeType) {
+    function showIssueDetails(issue, evidence, mimeType, audioData, audioMimeType, audioDuration) {
         document.getElementById('viewFirstName').textContent = issue.first_name;
         document.getElementById('viewLastName').textContent = issue.last_name;
         document.getElementById('viewGradeLevel').textContent = issue.grade_level;
@@ -654,6 +665,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="text-sm text-gray-500">No evidence provided</p>
                 </div>
             `;
+        }
+
+        // Display audio recording if available
+        if (typeof displayAudioRecording === 'function') {
+            displayAudioRecording(audioData, audioMimeType, audioDuration);
         }
 
         viewModal.classList.remove('hidden');

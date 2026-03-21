@@ -589,10 +589,15 @@ $pending_complaints = count($complaints);
                                                             $complaintData = $complaint;
                                                             unset($complaintData['evidence']);
                                                             unset($complaintData['mime_type']);
+                                                            unset($complaintData['audio_recording']);
+                                                            unset($complaintData['audio_mime_type']);
                                                             echo json_encode($complaintData);
                                                         ?>'
                                                         data-evidence='<?php echo !empty($complaint['evidence']) ? base64_encode($complaint['evidence']) : ''; ?>'
-                                                        data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'>
+                                                        data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'
+                                                        data-audio='<?php echo !empty($complaint['audio_recording']) ? base64_encode($complaint['audio_recording']) : ''; ?>'
+                                                        data-audio-mime='<?php echo !empty($complaint['audio_mime_type']) ? htmlspecialchars($complaint['audio_mime_type']) : ''; ?>'
+                                                        data-audio-duration='<?php echo !empty($complaint['audio_duration']) ? $complaint['audio_duration'] : '0'; ?>'>
                                                     <i class="fas fa-eye"></i>
                                                     View
                                                 </button>
@@ -715,6 +720,9 @@ $pending_complaints = count($complaints);
                                 <!-- Evidence will be populated here -->
                             </div>
                         </div>
+
+                        <!-- Audio Recording -->
+                        <?php include 'components/audio-player.php'; ?>
                     </div>
                 </div>
             </div>
@@ -775,7 +783,7 @@ $pending_complaints = count($complaints);
             let currentComplaintIdForSMS = null;
 
             // Function to show complaint details
-            function showComplaintDetails(complaint, evidence, mimeType) {
+            function showComplaintDetails(complaint, evidence, mimeType, audioData, audioMimeType, audioDuration) {
                 // Store complaint ID for SMS
                 currentComplaintIdForSMS = complaint.id;
                 
@@ -825,6 +833,11 @@ $pending_complaints = count($complaints);
                     `;
                 }
 
+                // Display audio recording if available
+                if (typeof displayAudioRecording === 'function') {
+                    displayAudioRecording(audioData, audioMimeType, audioDuration);
+                }
+
                 // Show modal
                 viewModal.classList.remove('hidden');
             }
@@ -835,7 +848,10 @@ $pending_complaints = count($complaints);
                     const complaintData = JSON.parse(this.dataset.complaint);
                     const evidence = this.dataset.evidence;
                     const mimeType = this.dataset.mimeType;
-                    showComplaintDetails(complaintData, evidence, mimeType);
+                    const audioData = this.dataset.audio;
+                    const audioMimeType = this.dataset.audioMime;
+                    const audioDuration = this.dataset.audioDuration;
+                    showComplaintDetails(complaintData, evidence, mimeType, audioData, audioMimeType, audioDuration);
                 });
             });
 

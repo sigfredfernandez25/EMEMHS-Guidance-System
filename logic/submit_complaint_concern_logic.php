@@ -33,7 +33,7 @@ try {
     $type = $_POST['complaint_type'];
     $severity = $_POST['severity'] ?? 'medium';
     $other = $_POST['other_specify'] ?? '';
-    $description = $_POST['description']; // <-- text from typing or voice recognition
+    $description = $_POST['description'] ?? ''; // Text description (optional if audio provided)
     $counselingDate = $_POST['counseling_date'] ?? null;
 
     $insertType = $type;
@@ -49,6 +49,12 @@ try {
         window.location.href = '../pages/index.php';
         </script>";
         exit();
+    }
+
+    // Validate that either description or audio is provided
+    $hasAudio = !empty($_POST['audio_data']);
+    if (empty(trim($description)) && !$hasAudio) {
+        throw new Exception("Please provide either a written description or an audio recording.");
     }
 
     // Check if student is verified
@@ -97,6 +103,23 @@ try {
         $imageType = $_POST['existing_mime_type'];
     }
 
+    // Audio recording handling (optional)
+    $audioRecording = null;
+    $audioMimeType = null;
+    $audioDuration = null;
+
+    if (!empty($_POST['audio_data'])) {
+        $audioRecording = base64_decode($_POST['audio_data']);
+        $audioMimeType = $_POST['audio_mime_type'] ?? 'audio/webm';
+        $audioDuration = !empty($_POST['audio_duration']) ? intval($_POST['audio_duration']) : null;
+        
+        // Validate audio size (max 5MB)
+        $audioSizeMB = strlen($audioRecording) / (1024 * 1024);
+        if ($audioSizeMB > 5) {
+            throw new Exception("Audio recording is too large (" . number_format($audioSizeMB, 2) . "MB). Maximum size is 5MB.");
+        }
+    }
+
     $pdo->beginTransaction();
 
     $stmt = $pdo->prepare($queryUse);
@@ -109,6 +132,9 @@ try {
             $counselingDate,
             $evidence,
             $imageType,
+            $audioRecording,
+            $audioMimeType,
+            $audioDuration,
             $status,
             $date,
             $time,
@@ -123,6 +149,9 @@ try {
             $counselingDate,
             $evidence,
             $imageType,
+            $audioRecording,
+            $audioMimeType,
+            $audioDuration,
             $status,
             $date,
             $time,

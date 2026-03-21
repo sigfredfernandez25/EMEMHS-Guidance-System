@@ -359,10 +359,15 @@ foreach ($all_complaints as $complaint) {
                                                             $complaintData = $complaint;
                                                             unset($complaintData['evidence']);
                                                             unset($complaintData['mime_type']);
+                                                            unset($complaintData['audio_recording']);
+                                                            unset($complaintData['audio_mime_type']);
                                                             echo json_encode($complaintData);
                                                         ?>'
                                                         data-evidence='<?php echo !empty($complaint['evidence']) ? base64_encode($complaint['evidence']) : ''; ?>'
-                                                        data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'>
+                                                        data-mime-type='<?php echo !empty($complaint['mime_type']) ? htmlspecialchars($complaint['mime_type']) : ''; ?>'
+                                                        data-audio='<?php echo !empty($complaint['audio_recording']) ? base64_encode($complaint['audio_recording']) : ''; ?>'
+                                                        data-audio-mime='<?php echo !empty($complaint['audio_mime_type']) ? htmlspecialchars($complaint['audio_mime_type']) : ''; ?>'
+                                                        data-audio-duration='<?php echo !empty($complaint['audio_duration']) ? $complaint['audio_duration'] : '0'; ?>'>
                                                     <i class="fas fa-eye"></i>
                                                     <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
                                                         View Details
@@ -501,6 +506,9 @@ foreach ($all_complaints as $complaint) {
                             <!-- Evidence will be populated here -->
                         </div>
                     </div>
+
+                    <!-- Audio Recording -->
+                    <?php include 'components/audio-player.php'; ?>
                 </div>
             </div>
         </div>
@@ -519,7 +527,7 @@ foreach ($all_complaints as $complaint) {
     const closeViewModalBtn = document.getElementById('closeViewModalBtn');
 
     // Function to show complaint details
-    function showComplaintDetails(complaint, evidence, mimeType) {
+    function showComplaintDetails(complaint, evidence, mimeType, audioData, audioMimeType, audioDuration) {
         // Set student information
         document.getElementById('viewFirstName').textContent = complaint.first_name;
         document.getElementById('viewLastName').textContent = complaint.last_name;
@@ -607,6 +615,11 @@ foreach ($all_complaints as $complaint) {
             `;
         }
 
+        // Display audio recording if available
+        if (typeof displayAudioRecording === 'function') {
+            displayAudioRecording(audioData, audioMimeType, audioDuration);
+        }
+
         // Show modal
         viewModal.classList.remove('hidden');
     }
@@ -617,7 +630,10 @@ foreach ($all_complaints as $complaint) {
             const complaintData = JSON.parse(this.dataset.complaint);
             const evidence = this.dataset.evidence;
             const mimeType = this.dataset.mimeType;
-            showComplaintDetails(complaintData, evidence, mimeType);
+            const audioData = this.dataset.audio;
+            const audioMimeType = this.dataset.audioMime;
+            const audioDuration = this.dataset.audioDuration;
+            showComplaintDetails(complaintData, evidence, mimeType, audioData, audioMimeType, audioDuration);
         });
     });
 
