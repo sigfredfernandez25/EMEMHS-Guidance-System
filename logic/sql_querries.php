@@ -549,3 +549,159 @@ define(
      WHERE cc.student_id = ?
      ORDER BY cc.date_created DESC, cc.time_created DESC"
 );
+
+
+// Session Notes Queries
+define('TBL_SESSION_NOTES', 'session_notes');
+
+define(
+    'SQL_INSERT_SESSION_NOTE',
+    "INSERT INTO " . TBL_SESSION_NOTES . " (
+        complaint_id, session_number, session_date, session_time,
+        presenting_problem_1, presenting_problem_2, presenting_problem_3,
+        general_observations, session_summary, action_taken,
+        follow_up_recommendations, next_appointment_date, next_appointment_time,
+        counselor_name, counselor_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+);
+
+define(
+    'SQL_UPDATE_SESSION_NOTE',
+    "UPDATE " . TBL_SESSION_NOTES . " SET
+        session_date = ?,
+        session_time = ?,
+        presenting_problem_1 = ?,
+        presenting_problem_2 = ?,
+        presenting_problem_3 = ?,
+        general_observations = ?,
+        session_summary = ?,
+        action_taken = ?,
+        follow_up_recommendations = ?,
+        next_appointment_date = ?,
+        next_appointment_time = ?,
+        counselor_name = ?
+    WHERE id = ?"
+);
+
+define(
+    'SQL_GET_SESSION_NOTES_BY_COMPLAINT',
+    "SELECT 
+        sn.id as session_id,
+        sn.complaint_id,
+        sn.session_number,
+        sn.session_date,
+        sn.session_time,
+        sn.presenting_problem_1,
+        sn.presenting_problem_2,
+        sn.presenting_problem_3,
+        sn.general_observations,
+        sn.session_summary,
+        sn.action_taken,
+        sn.follow_up_recommendations,
+        sn.next_appointment_date,
+        sn.next_appointment_time,
+        sn.counselor_name,
+        sn.created_at,
+        sn.updated_at,
+        cc.type as complaint_type,
+        cc.severity,
+        cc.status as complaint_status,
+        s.id as student_id,
+        s.first_name,
+        s.last_name,
+        s.grade_level,
+        s.section,
+        CONCAT(s.first_name, ' ', s.last_name) as student_name
+    FROM " . TBL_SESSION_NOTES . " sn
+    JOIN " . TBL_COMPLAINTS_CONCERNS . " cc ON sn.complaint_id = cc.id
+    JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
+    WHERE sn.complaint_id = ?
+    ORDER BY sn.session_number"
+);
+
+define(
+    'SQL_GET_SESSION_NOTE_BY_ID',
+    "SELECT 
+        sn.id as session_id,
+        sn.complaint_id,
+        sn.session_number,
+        sn.session_date,
+        sn.session_time,
+        sn.presenting_problem_1,
+        sn.presenting_problem_2,
+        sn.presenting_problem_3,
+        sn.general_observations,
+        sn.session_summary,
+        sn.action_taken,
+        sn.follow_up_recommendations,
+        sn.next_appointment_date,
+        sn.next_appointment_time,
+        sn.counselor_name,
+        sn.created_at,
+        sn.updated_at,
+        cc.type as complaint_type,
+        cc.severity,
+        cc.status as complaint_status,
+        s.id as student_id,
+        s.first_name,
+        s.last_name,
+        s.grade_level,
+        s.section,
+        CONCAT(s.first_name, ' ', s.last_name) as student_name
+    FROM " . TBL_SESSION_NOTES . " sn
+    JOIN " . TBL_COMPLAINTS_CONCERNS . " cc ON sn.complaint_id = cc.id
+    JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
+    WHERE sn.id = ?"
+);
+
+define(
+    'SQL_DELETE_SESSION_NOTE',
+    "DELETE FROM " . TBL_SESSION_NOTES . " WHERE id = ?"
+);
+
+define(
+    'SQL_GET_SESSION_COUNT',
+    "SELECT COUNT(*) as count FROM " . TBL_SESSION_NOTES . " WHERE complaint_id = ?"
+);
+
+define(
+    'SQL_GET_LATEST_SESSION',
+    "SELECT 
+        sn.id as session_id,
+        sn.complaint_id,
+        sn.session_number,
+        sn.session_date,
+        sn.session_time,
+        sn.presenting_problem_1,
+        sn.presenting_problem_2,
+        sn.presenting_problem_3,
+        sn.general_observations,
+        sn.session_summary,
+        sn.action_taken,
+        sn.follow_up_recommendations,
+        sn.next_appointment_date,
+        sn.next_appointment_time,
+        sn.counselor_name,
+        sn.created_at,
+        sn.updated_at,
+        cc.type as complaint_type,
+        cc.severity,
+        cc.status as complaint_status,
+        s.id as student_id,
+        s.first_name,
+        s.last_name,
+        s.grade_level,
+        s.section,
+        CONCAT(s.first_name, ' ', s.last_name) as student_name
+    FROM " . TBL_SESSION_NOTES . " sn
+    JOIN " . TBL_COMPLAINTS_CONCERNS . " cc ON sn.complaint_id = cc.id
+    JOIN " . TBL_STUDENTS . " s ON cc.student_id = s.id
+    WHERE sn.complaint_id = ?
+    ORDER BY sn.session_number DESC
+    LIMIT 1"
+);
+
+define(
+    'SQL_GET_NEXT_SESSION_NUMBER',
+    "SELECT COALESCE(MAX(session_number), 0) + 1 as next_session FROM " . TBL_SESSION_NOTES . " WHERE complaint_id = ?"
+);

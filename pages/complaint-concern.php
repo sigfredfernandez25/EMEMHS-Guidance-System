@@ -189,19 +189,19 @@ $complaints = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     </button>
                                                 </form>
                                             <?php else: ?>
-                                                <!-- Disabled Edit Button for non-pending complaints -->
-                                                <button disabled class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg text-sm cursor-not-allowed">
-                                                    Edit
-                                                </button>
-                                                <span class="text-xs text-gray-500 mt-1">
-                                                    <?php
-                                                    if ($complaint['status'] === 'scheduled') {
-                                                        echo 'Cannot edit scheduled complaints';
-                                                    } elseif ($complaint['status'] === 'resolved') {
-                                                        echo 'Cannot edit resolved complaints';
-                                                    }
-                                                    ?>
-                                                </span>
+                                                <!-- View Sessions Button - For scheduled/resolved complaints -->
+                                                <a href="student-view-sessions.php?complaint_id=<?= $complaint['id'] ?>" 
+                                                   class="btn-primary inline-flex items-center px-4 py-2 rounded-lg text-sm">
+                                                    <i class="fas fa-clipboard-list mr-2"></i>
+                                                    View Sessions
+                                                    <?php 
+                                                    $session_count = $complaint['session_count'] ?? 0;
+                                                    if ($session_count > 0): ?>
+                                                        <span class="ml-2 bg-white text-[#800000] rounded-full px-2 py-0.5 text-xs font-bold">
+                                                            <?= $session_count ?>
+                                                        </span>
+                                                    <?php endif; ?>
+                                                </a>
                                             <?php endif; ?>
                                         </div>
                                     </td>

@@ -373,6 +373,16 @@ foreach ($all_complaints as $complaint) {
                                                         View Details
                                                     </span>
                                                 </button>
+                                                <a href="view-session-history.php?complaint_id=<?= $complaint['id'] ?>" 
+                                                   class="bg-[#800000] hover:bg-[#600000] text-white p-2 rounded-lg transition-colors duration-200 group relative">
+                                                    <i class="fas fa-clipboard-list"></i>
+                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                        View Sessions <?php 
+                                                        $session_count = $complaint['session_count'] ?? 0;
+                                                        if ($session_count > 0) echo "($session_count)";
+                                                        ?>
+                                                    </span>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>
