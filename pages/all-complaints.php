@@ -383,6 +383,15 @@ foreach ($all_complaints as $complaint) {
                                                         ?>
                                                     </span>
                                                 </a>
+                                                <?php if (in_array($complaint['status'], ['pending', 'scheduled', 'unresolved'])): ?>
+                                                <button onclick="openReferralModal(<?= $complaint['id'] ?>, <?= $complaint['student_id'] ?>, '<?= htmlspecialchars($complaint['first_name'] . ' ' . $complaint['last_name']) ?>')" 
+                                                        class="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg transition-colors duration-200 group relative">
+                                                    <i class="fas fa-share-square"></i>
+                                                    <span class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                                                        Refer to Office
+                                                    </span>
+                                                </button>
+                                                <?php endif; ?>
                                             </div>
                                         </td>
                                     </tr>
@@ -717,6 +726,106 @@ foreach ($all_complaints as $complaint) {
             }
         });
     });
+
+    // Referral Modal Functions
+    function openReferralModal(complaintId, studentId, studentName) {
+        document.getElementById('referralComplaintId').value = complaintId;
+        document.getElementById('referralStudentId').value = studentId;
+        document.getElementById('referralStudentName').textContent = studentName;
+        document.getElementById('referralModal').classList.remove('hidden');
+    }
+
+    function closeReferralModal() {
+        document.getElementById('referralModal').classList.add('hidden');
+        document.getElementById('referralForm').reset();
+    }
+
+    function submitReferral() {
+        const form = document.getElementById('referralForm');
+        const formData = new FormData(form);
+
+        fetch('../logic/create_referral_logic.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Referral created successfully!');
+                closeReferralModal();
+                // Optionally reload the page to show updated data
+                // location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error creating referral');
+            console.error(error);
+        });
+    }
 </script>
+
+<!-- Referral Modal -->
+<div id="referralModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto hidden z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-2xl bg-white">
+        <div class="flex justify-between items-center pb-4 border-b">
+            <h3 class="text-xl font-semibold text-[#800000]">
+                <i class="fas fa-share-square mr-2"></i>
+                Refer to Another Office
+            </h3>
+            <button onclick="closeReferralModal()" class="text-gray-500 hover:text-gray-700">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <form id="referralForm" class="py-6">
+            <input type="hidden" id="referralComplaintId" name="complaint_id">
+            <input type="hidden" id="referralStudentId" name="student_id">
+            
+            <div class="space-y-4">
+                <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                    <p class="text-sm text-gray-700">
+                        <i class="fas fa-user mr-2"></i>
+                        <strong>Student:</strong> <span id="referralStudentName"></span>
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Refer To (Office/Person) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" 
+                           name="referred_to" 
+                           required
+                           placeholder="e.g., Disciplinary Office, School Clinic, Principal's Office"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for Referral <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="reason" 
+                              required
+                              rows="5"
+                              placeholder="Explain why this case is being referred..."
+                              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#800000] focus:border-transparent"></textarea>
+                </div>
+            </div>
+        </form>
+        <div class="pt-4 border-t flex justify-end gap-2">
+            <button onclick="closeReferralModal()" 
+                    class="px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 transition">
+                Cancel
+            </button>
+            <button onclick="submitReferral()" 
+                    class="px-4 py-2 rounded-lg bg-[#800000] text-white hover:bg-[#600000] transition">
+                <i class="fas fa-share-square mr-2"></i>
+                Create Referral
+            </button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>

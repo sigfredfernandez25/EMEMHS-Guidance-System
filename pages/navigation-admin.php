@@ -212,6 +212,16 @@ function getUnreadSuggestionsCount()
                 <span class="sidebar-tooltip">All Complaints</span>
             </a>
 
+            <a href="referrals-list.php" class="nav-link flex items-center space-x-3 px-4 py-1.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'referrals-list.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Referrals">
+                <span class="icon-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                </span>
+                <span class="truncate text-sm">Referrals</span>
+                <span class="sidebar-tooltip">Referrals</span>
+            </a>
+
             <a href="reports.php" class="nav-link flex items-center space-x-3 px-4 py-1.5 rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[#800000] text-sm <?php echo ($current_page == 'reports.php') ? 'bg-[#800000]/10 text-[#800000] font-medium' : 'text-gray-700 hover:text-[#800000] hover:bg-gray-50'; ?>" tabindex="0" data-tooltip="Reports">
                 <span class="icon-center">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
