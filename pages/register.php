@@ -238,6 +238,20 @@
                         </div>
                     </div>
 
+                    <!-- Terms and Conditions Section -->
+                    <div class="form-section">
+                        <div class="flex items-start space-x-3">
+                            <input type="checkbox" id="terms_checkbox" name="terms_checkbox" onchange="checkAllValidations()" required
+                                class="mt-1 w-4 h-4 text-[#800000] border-gray-300 rounded focus:ring-[#800000] focus:ring-2">
+                            <label for="terms_checkbox" class="text-sm text-gray-700">
+                                I have read and agree to the 
+                                <a href="#" onclick="showTermsModal(); return false;" class="text-[#800000] hover:text-[#a52a2a] underline font-medium">
+                                    Terms and Conditions
+                                </a>
+                            </label>
+                        </div>
+                    </div>
+
                     <!-- Submit Button -->
                     <div class="flex justify-center pt-4 border-t border-gray-200 mt-6">
                         <button type="submit" id="register" disabled
@@ -551,14 +565,16 @@
             const phone = document.getElementById('phone').value;
             const code = document.getElementById('code').value;
             const realCode = localStorage.getItem("code");
+            const termsCheckbox = document.getElementById('terms_checkbox');
 
             // Check all conditions
             const isPasswordValid = password.length >= 6 && /[!@#$%^&*]/.test(password) && password === confirmPassword;
             const isPhoneValid = /^09[0-9]{9}$/.test(phone);
             const isCodeValid = code === realCode;
+            const isTermsAccepted = termsCheckbox && termsCheckbox.checked;
 
             // Enable button only if all validations pass
-            if (isPasswordValid && isPhoneValid && isCodeValid) {
+            if (isPasswordValid && isPhoneValid && isCodeValid && isTermsAccepted) {
                 registerButton.disabled = false;
                 registerButton.className = 'btn-primary px-8 py-3 text-white font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2';
             } else {
@@ -566,6 +582,116 @@
                 registerButton.className = 'btn-primary px-8 py-3 text-white font-semibold rounded-xl focus:outline-none focus:ring-2 focus:ring-[#800000]/20 focus:ring-offset-2 opacity-50 cursor-not-allowed';
             }
         }
+
+        // Function to show terms and conditions modal
+        function showTermsModal() {
+            const modal = document.getElementById('termsModal');
+            modal.classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Function to close terms and conditions modal
+        function closeTermsModal() {
+            const modal = document.getElementById('termsModal');
+            modal.classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('termsModal');
+            if (event.target === modal) {
+                closeTermsModal();
+            }
+        }
     </script>
+
+    <!-- Terms and Conditions Modal -->
+    <div id="termsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+            <!-- Modal Header -->
+            <div class="bg-[#800000] text-white px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold">Terms and Conditions</h2>
+                <button onclick="closeTermsModal()" class="text-white hover:text-gray-200 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="px-6 py-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+                <div class="space-y-4 text-gray-700">
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">1. Acceptance of Terms</h3>
+                        <p class="text-sm">By registering for and using the Guidance System, you agree to comply with and be bound by these Terms and Conditions. If you do not agree to these terms, please do not register or use the system.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">2. User Registration</h3>
+                        <p class="text-sm">You must provide accurate, current, and complete information during registration. You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">3. Account Verification</h3>
+                        <p class="text-sm">All student accounts require verification by school administrators. You must upload a valid school ID during registration. Your account will remain pending until verified by authorized personnel.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">4. Privacy and Data Protection</h3>
+                        <p class="text-sm">We collect and process your personal information including name, contact details, school ID, and complaint/concern submissions. This information is used solely for school guidance purposes and will be handled in accordance with data protection regulations.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">5. Acceptable Use</h3>
+                        <p class="text-sm">You agree to use the system only for legitimate guidance-related purposes. Prohibited activities include:</p>
+                        <ul class="list-disc list-inside text-sm ml-4 mt-2 space-y-1">
+                            <li>Submitting false or misleading information</li>
+                            <li>Harassing or threatening other users</li>
+                            <li>Attempting to access unauthorized areas of the system</li>
+                            <li>Using the system for any illegal purposes</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">6. Complaints and Concerns</h3>
+                        <p class="text-sm">All complaints and concerns submitted through the system will be reviewed by guidance counselors and school administrators. The school reserves the right to take appropriate action based on the nature of the complaint.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">7. Lost and Found Items</h3>
+                        <p class="text-sm">When reporting lost items or claiming found items, you must provide accurate descriptions and proof of ownership when required. The school is not responsible for lost items that are not recovered.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">8. SMS Notifications</h3>
+                        <p class="text-sm">By registering, you consent to receive SMS notifications related to your complaints, appointments, and system updates. Standard messaging rates may apply.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">9. Account Suspension</h3>
+                        <p class="text-sm">The school reserves the right to suspend or terminate your account if you violate these terms or engage in inappropriate behavior.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">10. Changes to Terms</h3>
+                        <p class="text-sm">The school reserves the right to modify these Terms and Conditions at any time. Continued use of the system after changes constitutes acceptance of the modified terms.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-lg font-semibold text-[#800000] mb-2">11. Contact Information</h3>
+                        <p class="text-sm">For questions or concerns about these terms, please contact the school guidance office.</p>
+                    </section>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                <button onclick="closeTermsModal()" class="btn-primary px-6 py-2 text-white rounded-lg hover:bg-[#a52a2a] transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

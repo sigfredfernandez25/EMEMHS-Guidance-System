@@ -13,6 +13,11 @@ try {
     $phone = trim($_POST['phone']);
     $password = $_POST['password'];
     $address = trim($_POST['address']);
+    
+    // Check if terms and conditions were accepted
+    if (!isset($_POST['terms_checkbox']) || $_POST['terms_checkbox'] !== 'on') {
+        throw new Exception("You must accept the Terms and Conditions to register");
+    }
 
     // Handle school ID image upload
     $school_id_image = null;
