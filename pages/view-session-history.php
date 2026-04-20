@@ -5,7 +5,7 @@ require_once '../logic/db_connection.php';
 require_once '../logic/session_notes_logic.php';
 
 // Check if staff is logged in
-if (!$_SESSION['isLoggedIn'] || $_SESSION['role'] !== 'admin') {
+if (!$_SESSION['isLoggedIn']) {
     header("Location: login.php");
     exit();
 }
@@ -40,61 +40,171 @@ $sessions = getSessionNotesByComplaint($complaint_id);
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        :root {
+            --primary-color: #800000;
+            --primary-hover: #600000;
+            --secondary-color: #64748b;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8fafc;
+            color: #1e293b;
         }
-        .session-card {
+
+        .minimal-card {
             background: white;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s;
-            border-left: 4px solid #800000;
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
-        .session-card:hover {
+
+        .minimal-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
+
+        .minimal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--primary-color);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .minimal-card:hover::before {
+            opacity: 1;
+        }
+
+        .minimal-btn {
+            background: white;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .minimal-btn:hover {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .minimal-btn i {
+            transition: transform 0.2s ease;
+        }
+
+        .minimal-btn:hover i {
+            transform: translateX(4px);
+        }
+
         .btn-primary {
-            background-color: #800000;
+            background-color: var(--primary-color);
             color: white;
             padding: 0.75rem 1.5rem;
             border-radius: 0.5rem;
             font-weight: 500;
+            font-size: 0.875rem;
             transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
         }
+
         .btn-primary:hover {
-            background-color: #600000;
+            background-color: var(--primary-hover);
         }
-        .btn-secondary {
-            background-color: #f1f5f9;
-            color: #64748b;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
+
+        .section-title {
+            position: relative;
+            display: inline-block;
+            font-size: 0.875rem;
             font-weight: 500;
-            transition: all 0.2s;
+            color: var(--primary-color);
         }
-        .btn-secondary:hover {
-            background-color: #e2e8f0;
+
+        .info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-size: 0.875rem;
         }
-        .timeline-line {
+
+        .session-header {
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-btn {
+            color: var(--secondary-color);
+            transition: all 0.2s ease;
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            position: relative;
+        }
+
+        .action-btn:hover {
+            background: #f1f5f9;
+            color: var(--primary-color);
+        }
+
+        .action-btn.delete:hover {
+            color: #ef4444;
+        }
+
+        .tooltip {
             position: absolute;
-            left: 1.5rem;
-            top: 3rem;
-            bottom: -2rem;
-            width: 2px;
-            background: linear-gradient(to bottom, #800000, #e2e8f0);
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-bottom: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: #1e293b;
+            color: white;
+            font-size: 0.75rem;
+            border-radius: 0.375rem;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
         }
-        .timeline-dot {
-            position: absolute;
-            left: 0.75rem;
-            top: 1.5rem;
-            width: 1.5rem;
-            height: 1.5rem;
-            background: #800000;
-            border-radius: 50%;
-            border: 3px solid white;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+
+        .action-btn:hover .tooltip {
+            opacity: 1;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin-bottom: 1.5rem;
         }
     </style>
 </head>
@@ -105,16 +215,16 @@ $sessions = getSessionNotesByComplaint($complaint_id);
     <main class="p-8">
         <div class="max-w-6xl mx-auto">
             <!-- Header -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 mb-6">
+            <div class="minimal-card p-6 mb-6">
                 <div class="flex items-center justify-between">
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-800">Session History</h1>
-                        <p class="text-gray-600 mt-2">
+                        <h1 class="text-2xl font-bold text-gray-800 mb-3">Session History</h1>
+                        <p class="text-gray-600 text-sm mb-1">
                             <i class="fas fa-user mr-2"></i>
                             <?php echo htmlspecialchars($complaint['first_name'] . ' ' . $complaint['last_name']); ?> - 
                             <?php echo htmlspecialchars($complaint['grade_level'] . ' ' . $complaint['section']); ?>
                         </p>
-                        <p class="text-sm text-gray-500 mt-1">
+                        <p class="text-sm text-gray-500">
                             <i class="fas fa-tag mr-2"></i>
                             <?php echo htmlspecialchars(ucfirst($complaint['type'])); ?> | 
                             <span class="capitalize"><?php echo htmlspecialchars($complaint['severity'] ?? 'medium'); ?> Priority</span>
@@ -124,10 +234,10 @@ $sessions = getSessionNotesByComplaint($complaint_id);
                         <a href="session-notes-form.php?complaint_id=<?php echo $complaint_id; ?>" class="btn-primary">
                             <i class="fas fa-plus mr-2"></i>Add New Session
                         </a>
-                        <a href="print-progress-notes.php?complaint_id=<?php echo $complaint_id; ?>" target="_blank" class="btn-secondary">
+                        <a href="print-progress-notes.php?complaint_id=<?php echo $complaint_id; ?>" target="_blank" class="minimal-btn">
                             <i class="fas fa-print mr-2"></i>Print All
                         </a>
-                        <a href="all-complaints.php" class="btn-secondary">
+                        <a href="all-complaints.php" class="minimal-btn">
                             <i class="fas fa-arrow-left mr-2"></i>Back
                         </a>
                     </div>
@@ -136,56 +246,55 @@ $sessions = getSessionNotesByComplaint($complaint_id);
 
             <!-- Sessions Timeline -->
             <?php if (empty($sessions)): ?>
-                <div class="bg-white rounded-2xl shadow-lg p-12 text-center">
-                    <i class="fas fa-clipboard-list text-6xl text-gray-300 mb-4"></i>
-                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Session Notes Yet</h3>
-                    <p class="text-gray-500 mb-6">Start documenting counseling sessions for this complaint</p>
-                    <a href="session-notes-form.php?complaint_id=<?php echo $complaint_id; ?>" class="btn-primary inline-block">
+                <div class="minimal-card empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>No Session Notes Yet</h3>
+                    <p>Start documenting counseling sessions for this complaint</p>
+                    <a href="session-notes-form.php?complaint_id=<?php echo $complaint_id; ?>" class="btn-primary">
                         <i class="fas fa-plus mr-2"></i>Add First Session
                     </a>
                 </div>
             <?php else: ?>
-                <div class="space-y-6 relative">
+                <div class="space-y-6">
                     <?php foreach ($sessions as $index => $session): ?>
-                        <div class="session-card p-6 relative ml-12">
-                            <?php if ($index < count($sessions) - 1): ?>
-                                <div class="timeline-line"></div>
-                            <?php endif; ?>
-                            <div class="timeline-dot"></div>
-                            
+                        <div class="minimal-card p-6">
                             <!-- Session Header -->
-                            <div class="flex items-start justify-between mb-4">
-                                <div>
-                                    <h3 class="text-xl font-bold text-[#800000]">
-                                        Session #<?php echo $session['session_number']; ?>
-                                    </h3>
-                                    <p class="text-sm text-gray-600 mt-1">
-                                        <i class="fas fa-calendar mr-2"></i>
-                                        <?php echo date('F j, Y', strtotime($session['session_date'])); ?> at 
-                                        <?php echo date('g:i A', strtotime($session['session_time'])); ?>
-                                    </p>
-                                    <p class="text-sm text-gray-600">
-                                        <i class="fas fa-user-md mr-2"></i>
-                                        <?php echo htmlspecialchars($session['counselor_name']); ?>
-                                    </p>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <a href="session-notes-form.php?complaint_id=<?php echo $complaint_id; ?>&session_id=<?php echo $session['session_id']; ?>" 
-                                       class="text-blue-600 hover:text-blue-800 p-2" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
-                                    <button onclick="deleteSession(<?php echo $session['session_id']; ?>)" 
-                                            class="text-red-600 hover:text-red-800 p-2" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
+                            <div class="session-header">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-[#800000] mb-2">
+                                            Session #<?php echo $session['session_number']; ?>
+                                        </h3>
+                                        <p class="text-sm text-gray-600 mb-1">
+                                            <i class="fas fa-calendar mr-2"></i>
+                                            <?php echo date('F j, Y', strtotime($session['session_date'])); ?> at 
+                                            <?php echo date('g:i A', strtotime($session['session_time'])); ?>
+                                        </p>
+                                        <p class="text-sm text-gray-600">
+                                            <i class="fas fa-user-md mr-2"></i>
+                                            <?php echo htmlspecialchars($session['counselor_name']); ?>
+                                        </p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <a href="session-notes-form.php?complaint_id=<?php echo $complaint_id; ?>&session_id=<?php echo $session['session_id']; ?>" 
+                                           class="action-btn">
+                                            <i class="fas fa-edit"></i>
+                                            <span class="tooltip">Edit Session</span>
+                                        </a>
+                                        <button onclick="deleteSession(<?php echo $session['session_id']; ?>)" 
+                                                class="action-btn delete">
+                                            <i class="fas fa-trash"></i>
+                                            <span class="tooltip">Delete Session</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Presenting Problems -->
                             <?php if (!empty($session['presenting_problem_1'])): ?>
                                 <div class="mb-4">
-                                    <h4 class="font-semibold text-gray-700 mb-2">Presenting Problems:</h4>
-                                    <ul class="list-disc list-inside space-y-1 text-gray-600">
+                                    <h4 class="section-title mb-2">Presenting Problems</h4>
+                                    <ul class="list-disc list-inside space-y-1 text-gray-600 text-sm">
                                         <?php if (!empty($session['presenting_problem_1'])): ?>
                                             <li><?php echo htmlspecialchars($session['presenting_problem_1']); ?></li>
                                         <?php endif; ?>
@@ -202,46 +311,46 @@ $sessions = getSessionNotesByComplaint($complaint_id);
                             <!-- General Observations -->
                             <?php if (!empty($session['general_observations'])): ?>
                                 <div class="mb-4">
-                                    <h4 class="font-semibold text-gray-700 mb-2">General Observations:</h4>
-                                    <p class="text-gray-600 bg-gray-50 p-3 rounded-lg">
+                                    <h4 class="section-title mb-2">General Observations</h4>
+                                    <div class="info-box text-gray-600">
                                         <?php echo nl2br(htmlspecialchars($session['general_observations'])); ?>
-                                    </p>
+                                    </div>
                                 </div>
                             <?php endif; ?>
 
                             <!-- Session Summary -->
                             <div class="mb-4">
-                                <h4 class="font-semibold text-gray-700 mb-2">Session Summary:</h4>
-                                <p class="text-gray-600 bg-blue-50 p-3 rounded-lg">
+                                <h4 class="section-title mb-2">Session Summary</h4>
+                                <div class="info-box text-gray-600" style="background: #eff6ff; border-color: #dbeafe;">
                                     <?php echo nl2br(htmlspecialchars($session['session_summary'])); ?>
-                                </p>
+                                </div>
                             </div>
 
                             <!-- Action Taken -->
                             <?php if (!empty($session['action_taken'])): ?>
                                 <div class="mb-4">
-                                    <h4 class="font-semibold text-gray-700 mb-2">Action Taken:</h4>
-                                    <p class="text-gray-600 bg-green-50 p-3 rounded-lg">
+                                    <h4 class="section-title mb-2">Action Taken</h4>
+                                    <div class="info-box text-gray-600" style="background: #f0fdf4; border-color: #dcfce7;">
                                         <?php echo nl2br(htmlspecialchars($session['action_taken'])); ?>
-                                    </p>
+                                    </div>
                                 </div>
                             <?php endif; ?>
 
                             <!-- Follow-up Recommendations -->
                             <?php if (!empty($session['follow_up_recommendations'])): ?>
                                 <div class="mb-4">
-                                    <h4 class="font-semibold text-gray-700 mb-2">Follow-up / Recommendations:</h4>
-                                    <p class="text-gray-600 bg-yellow-50 p-3 rounded-lg">
+                                    <h4 class="section-title mb-2">Follow-up / Recommendations</h4>
+                                    <div class="info-box text-gray-600" style="background: #fefce8; border-color: #fef3c7;">
                                         <?php echo nl2br(htmlspecialchars($session['follow_up_recommendations'])); ?>
-                                    </p>
+                                    </div>
                                 </div>
                             <?php endif; ?>
 
                             <!-- Next Appointment -->
                             <?php if (!empty($session['next_appointment_date'])): ?>
-                                <div class="bg-purple-50 p-3 rounded-lg">
-                                    <h4 class="font-semibold text-gray-700 mb-1">Next Appointment:</h4>
-                                    <p class="text-gray-600">
+                                <div class="info-box" style="background: #faf5ff; border-color: #f3e8ff;">
+                                    <h4 class="section-title mb-1">Next Appointment</h4>
+                                    <p class="text-gray-600 text-sm">
                                         <i class="fas fa-calendar-check mr-2"></i>
                                         <?php echo date('F j, Y', strtotime($session['next_appointment_date'])); ?>
                                         <?php if (!empty($session['next_appointment_time'])): ?>
